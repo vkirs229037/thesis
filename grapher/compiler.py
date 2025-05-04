@@ -393,13 +393,10 @@ class Parser:
                 self.report_parse_err(t, f"Неожиданный идентификатор {t.value}")
 
 
-class Compiler:
-    def __init__(self, content: str):
-        self.content = content
-
-    def compile(self) -> Tuple[Graph, List[Command]]:
-        lexer = Lexer(self.content)
-        lexer.lex()
-        parser = Parser(lexer.tokens)
-        parser.parse()
-        return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
+def compile(content: str) -> Tuple[Graph, List[Command]]:
+    lexer = Lexer(content)
+    lexer.lex()
+    parser = Parser(lexer.tokens)
+    parser.parse()
+    # g, commands = Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
+    return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands

@@ -6,7 +6,7 @@ import igraph as ig
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel
 from PyQt6.QtGui import QAction, QKeySequence   
-from compiler import Compiler, ParseError, LexError
+from compiler import compile, ParseError, LexError
 from graph import Graph
 import algs
 import os
@@ -163,9 +163,9 @@ class MainWindow(QMainWindow):
         pass
 
     def plot(self):
-        compiler = Compiler(self.editor.toPlainText())
+        content = self.editor.toPlainText()
         try:
-            graph, commands = compiler.compile()
+            graph, commands = compile(content)
         except (LexError, ParseError) as e:
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
