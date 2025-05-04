@@ -6,7 +6,7 @@ import igraph as ig
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel
 from PyQt6.QtGui import QAction, QKeySequence   
-from compiler import compile, ParseError, LexError
+from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
 import algs
 import os
@@ -170,6 +170,8 @@ class MainWindow(QMainWindow):
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
             return
+        alg_results = [exec_alg(graph, c) for c in commands]
+        print(alg_results)
         ig_graph = graph.to_ig_graph()
         layout = ig_graph.layout("kamada_kawai")
         graph.print()

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Dict, Tuple, Any, NoReturn
-
 from graph import Graph, Vertex, GraphKind
+import algs
 
 class TType(Enum):
     Id = auto()
@@ -392,7 +392,6 @@ class Parser:
             else:
                 self.report_parse_err(t, f"Неожиданный идентификатор {t.value}")
 
-
 def compile(content: str) -> Tuple[Graph, List[Command]]:
     lexer = Lexer(content)
     lexer.lex()
@@ -400,3 +399,31 @@ def compile(content: str) -> Tuple[Graph, List[Command]]:
     parser.parse()
     # g, commands = Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
     return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
+
+def report_alg_err(token: Token | None, msg: str) -> NoReturn:
+    if token is None:
+        raise ValueError(f"{msg}")
+    else:
+        raise ValueError(f"{token.line}:{token.col} {msg}")
+
+def exec_alg(g: Graph, com: Command) -> Any:
+    args = com.args
+    match com.func_name.value:
+        case "dijkstra":
+            s_v = args[0]
+            t_v = args[1]
+            if s_v.type != TType.Id:
+                report_alg_err(s_v, "Ожидался идентификатор вершины")
+            if t_v.type != TType.Id:
+                report_alg_err(t_v, "Ожидался идентификатор вершины")
+            s = next((v.id for v in g.vertices if v.name == s_v.value), -1)
+            t = next((v.id for v in g.vertices if v.name == t_v.value), -1)
+            if s == -1:
+                report_alg_err(s_v, "Вершина не определена")
+            if t == -1:
+                report_alg_err(t_v, "Вершина не определена")
+            r_m = algs.reachability_matrix(g)
+            if r_m[s, t] == 0:
+                report_alg_err(None, f"Между вершинами {s_v.value} и {t_v.value} не может быть найден путь")
+            d, path = algs.dijkstra(g, s, t)
+            return d, path
