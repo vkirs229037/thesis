@@ -1,4 +1,5 @@
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib import artist
 import igraph as ig
@@ -18,6 +19,7 @@ class MainWindow(QMainWindow):
         self.graph = None
         self.figure = Figure()
         self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
         self.button = QPushButton("Построить")
         self.editor = QPlainTextEdit()
         self.dirty = False
@@ -76,8 +78,13 @@ class MainWindow(QMainWindow):
         graph_editor_layout.addWidget(self.button)
         graph_editor_layout.addWidget(self.test_btn)
         graph_editor.setLayout(graph_editor_layout)
+        graph_image = QWidget()
+        graph_image_layout = QVBoxLayout()
+        graph_image_layout.addWidget(self.toolbar)
+        graph_image_layout.addWidget(self.canvas)
+        graph_image.setLayout(graph_image_layout)
         workspace_layout.addWidget(graph_editor)
-        workspace_layout.addWidget(self.canvas)
+        workspace_layout.addWidget(graph_image)
         workspace.setLayout(workspace_layout)
 
         container = QWidget()
