@@ -3,7 +3,7 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 import igraph as ig
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel
+from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget
 from PyQt6.QtGui import QAction, QKeySequence   
 from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
@@ -17,10 +17,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Grapher - Новый граф")
 
         self.graph = None
-        self.figure = Figure()
-        self.figure.subplots_adjust(left=0, right=1, bottom=0, top=1)
-        self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.cur_img = -1
+        self.figures = [Figure()]
+        self.figures[0].subplots_adjust(left=0, right=1, bottom=0, top=1)
+        self.canvases = [FigureCanvas(self.figures[0])]
+        self.toolbars = [NavigationToolbar(self.canvases[0], self)]
         self.button = QPushButton("Построить")
         self.editor = QPlainTextEdit()
         self.dirty = False
@@ -79,13 +80,11 @@ class MainWindow(QMainWindow):
         graph_editor_layout.addWidget(self.button)
         graph_editor_layout.addWidget(self.test_btn)
         graph_editor.setLayout(graph_editor_layout)
-        graph_image = QWidget()
-        graph_image_layout = QVBoxLayout()
-        graph_image_layout.addWidget(self.toolbar)
-        graph_image_layout.addWidget(self.canvas)
-        graph_image.setLayout(graph_image_layout)
+
+        self.graph_images = QTabWidget()
+        
         workspace_layout.addWidget(graph_editor)
-        workspace_layout.addWidget(graph_image)
+        workspace_layout.addWidget(self.graph_images)
         workspace.setLayout(workspace_layout)
 
         container = QWidget()
@@ -99,9 +98,12 @@ class MainWindow(QMainWindow):
             self.setWindowTitle(self.windowTitle() + " *")
             self.dirty = True
 
-    def clear_canvas(self):
-        self.figure.clear()
-        self.canvas.draw()
+    def clear_images(self):
+        self.figures = []
+        self.canvases = []
+        self.toolbars = []
+        self.graph_images.clear()
+        self.cur_img = -1
 
     def save_graph(self):
         code = self.editor.toPlainText()
@@ -127,7 +129,7 @@ class MainWindow(QMainWindow):
             self.editor.setPlainText(code)
         self.setWindowTitle("Grapher - " + os.path.basename(self.fileName))
         self.dirty = False
-        self.clear_canvas()
+        self.clear_images()
 
     def new_graph(self):
         if not self.confirm_save():
@@ -136,7 +138,7 @@ class MainWindow(QMainWindow):
         self.editor.setPlainText("")
         self.dirty = False
         self.setWindowTitle("Grapher - Новый граф")
-        self.clear_canvas()
+        self.clear_images()
 
     def closeEvent(self, e):
         if self.confirm_save():
@@ -164,6 +166,7 @@ class MainWindow(QMainWindow):
         pass
 
     def plot(self):
+        self.clear_images()
         content = self.editor.toPlainText()
         try:
             graph, commands = compile(content)
@@ -175,22 +178,24 @@ class MainWindow(QMainWindow):
         print(alg_results)
         ig_graph = graph.to_ig_graph()
         graph.print()
-        self.figure.clear()
         for r in alg_results:
             self.plot_one(ig_graph, r)
-        self.canvas.draw()
         self.graph = graph
 
     def plot_one(self, g: ig.Graph, result: Tuple[Any]):
         print(result)
-        ax = self.figure.add_subplot()
+        f = Figure()
+        f.subplots_adjust(left=0, bottom=0, right=1, top=1)
+        self.figures.append(f)
+        self.cur_img += 1
+        ax = self.figures[self.cur_img].add_subplot()
         layout = g.layout("kamada_kawai")
         vertex_size = 60
         g.es["color"] = "black"
         g.vs["color"] = "white"
         match result[0]:
             case "dijkstra":
-                self.figure.text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
+                self.figures[self.cur_img].text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
                 path_vs = g.vs.select(result[2])
                 path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
                 path_vs["color"] = "red"
@@ -210,6 +215,16 @@ class MainWindow(QMainWindow):
         )
         for i, dot in enumerate(layout.coords):
             ax.text(dot[0] - vertex_size*0.001, dot[1] - vertex_size*0.0025, g.vs["label"][i], transform=ax.transData)
+        canvas = FigureCanvas(self.figures[self.cur_img])
+        self.canvases.append(canvas)
+        toolbar = NavigationToolbar(self.canvases[self.cur_img])
+        self.toolbars.append(toolbar)
+        graph_tab = QWidget()
+        graph_tab_layout = QVBoxLayout()
+        graph_tab_layout.addWidget(self.toolbars[self.cur_img])
+        graph_tab_layout.addWidget(self.canvases[self.cur_img])
+        graph_tab.setLayout(graph_tab_layout)
+        self.graph_images.addTab(graph_tab, result[0])
 
     def test(self):
         r_m = algs.reachability_matrix(self.graph)
