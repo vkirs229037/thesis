@@ -1,7 +1,6 @@
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from matplotlib import artist
 import igraph as ig
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel
@@ -10,6 +9,7 @@ from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
 import algs
 import os
+from typing import Tuple, Any
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -18,6 +18,7 @@ class MainWindow(QMainWindow):
 
         self.graph = None
         self.figure = Figure()
+        self.figure.subplots_adjust(left=0, right=1, bottom=0, top=1)
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.button = QPushButton("Построить")
@@ -166,32 +167,49 @@ class MainWindow(QMainWindow):
         content = self.editor.toPlainText()
         try:
             graph, commands = compile(content)
-        except (LexError, ParseError) as e:
+            alg_results = [exec_alg(graph, c) for c in commands]
+        except (LexError, ParseError, ValueError) as e:
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
             return
-        alg_results = [exec_alg(graph, c) for c in commands]
         print(alg_results)
         ig_graph = graph.to_ig_graph()
-        layout = ig_graph.layout("kamada_kawai")
         graph.print()
         self.figure.clear()
-        ax = self.figure.add_subplot(111)
+        for r in alg_results:
+            self.plot_one(ig_graph, r)
+        self.canvas.draw()
+        self.graph = graph
+
+    def plot_one(self, g: ig.Graph, result: Tuple[Any]):
+        print(result)
+        ax = self.figure.add_subplot()
+        layout = g.layout("kamada_kawai")
         vertex_size = 60
+        g.es["color"] = "black"
+        g.vs["color"] = "white"
+        match result[0]:
+            case "dijkstra":
+                self.figure.text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
+                path_vs = g.vs.select(result[2])
+                path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
+                path_vs["color"] = "red"
+                path_es["color"] = "red"
+            case _:
+                raise ValueError
         ig.plot(
-            ig_graph,
+            g,
             target=ax,
             layout=layout,
             vertex_size=vertex_size,
-            vertex_label=ig_graph.vs["name"],
+            vertex_label=g.vs["name"],
             vertex_label_dist=0,
-            edge_label=ig_graph.es["weight"],
+            edge_label=g.es["weight"],
+            vertex_color=g.vs["color"],
+            edge_color=g.es["color"]
         )
         for i, dot in enumerate(layout.coords):
-            ax.text(dot[0] - vertex_size*0.001, dot[1] - vertex_size*0.0025, ig_graph.vs["label"][i], transform=ax.transData)
-        self.canvas.draw()
-        self.graph = graph
-        print(commands)
+            ax.text(dot[0] - vertex_size*0.001, dot[1] - vertex_size*0.0025, g.vs["label"][i], transform=ax.transData)
 
     def test(self):
         r_m = algs.reachability_matrix(self.graph)

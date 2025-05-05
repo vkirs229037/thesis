@@ -406,8 +406,9 @@ def report_alg_err(token: Token | None, msg: str) -> NoReturn:
     else:
         raise ValueError(f"{token.line}:{token.col} {msg}")
 
-def exec_alg(g: Graph, com: Command) -> Any:
+def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
     args = com.args
+    result = []
     match com.func_name.value:
         case "dijkstra":
             s_v = args[0]
@@ -426,4 +427,8 @@ def exec_alg(g: Graph, com: Command) -> Any:
             if r_m[s, t] == 0:
                 report_alg_err(None, f"Между вершинами {s_v.value} и {t_v.value} не может быть найден путь")
             d, path = algs.dijkstra(g, s, t)
-            return d, path
+            result += [d, path]
+        case _:
+            raise ValueError("Неизвестное название алгоритма")
+    result.insert(0, com.func_name.value)
+    return tuple(result)
