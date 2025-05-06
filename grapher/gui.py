@@ -3,8 +3,8 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 import igraph as ig
 from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget
-from PyQt6.QtGui import QAction, QKeySequence   
+from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget
+from PyQt6.QtGui import QAction, QKeySequence, QTextCursor
 from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
 import algs
@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Grapher - Новый граф")
 
         self.graph = None
+        self.last_command_line = -1
         self.cur_img = -1
         self.figures = [Figure()]
         self.figures[0].subplots_adjust(left=0, right=1, bottom=0, top=1)
@@ -62,13 +63,13 @@ class MainWindow(QMainWindow):
         algMenu = actionMenu.addMenu("Алгоритмы")
 
         dijkstra_action = QAction("Алгоритм Дейкстры", self)
-        dijkstra_action.triggered.connect(lambda checked, arg="dijkstra": self.alg(checked, arg))
+        dijkstra_action.triggered.connect(lambda checked, arg="dijkstra": self.insert_alg(checked, arg))
         floyd_action = QAction("Алгоритм Флойда", self)
-        floyd_action.triggered.connect(lambda checked, arg="floyd": self.alg(checked, arg))
+        floyd_action.triggered.connect(lambda checked, arg="floyd": self.insert_alg(checked, arg))
         chinese_post_action = QAction("Задача китайского почтальона", self)
-        chinese_post_action.triggered.connect(lambda checked, arg="chinesepostman": self.alg(checked, arg))
+        chinese_post_action.triggered.connect(lambda checked, arg="chinesepostman": self.insert_alg(checked, arg))
         max_match_action = QAction("Максимальные паросочетания", self)
-        max_match_action.triggered.connect(lambda checked, arg="maxmatching": self.alg(checked, arg))
+        max_match_action.triggered.connect(lambda checked, arg="maxmatching": self.insert_alg(checked, arg))
         
         algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action])
 
@@ -161,15 +162,12 @@ class MainWindow(QMainWindow):
                     return False
         else:
             return True
-        
-    def compile(self) -> Graph:
-        pass
 
     def plot(self):
         self.clear_images()
         content = self.editor.toPlainText()
         try:
-            graph, commands = compile(content)
+            graph, commands, self.last_command_line = compile(content)
             alg_results = [exec_alg(graph, c) for c in commands]
         except (LexError, ParseError, ValueError) as e:
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
@@ -178,11 +176,14 @@ class MainWindow(QMainWindow):
         print(alg_results)
         ig_graph = graph.to_ig_graph()
         graph.print()
-        for r in alg_results:
-            self.plot_one(ig_graph, r)
+        if len(alg_results) == 0:
+            self.plot_one(ig_graph, None)
+        else:
+            for r in alg_results:
+                self.plot_one(ig_graph, r)
         self.graph = graph
 
-    def plot_one(self, g: ig.Graph, result: Tuple[Any]):
+    def plot_one(self, g: ig.Graph, result: Tuple[Any] | None):
         print(result)
         f = Figure()
         f.subplots_adjust(left=0, bottom=0, right=1, top=1)
@@ -193,15 +194,19 @@ class MainWindow(QMainWindow):
         vertex_size = 60
         g.es["color"] = "black"
         g.vs["color"] = "white"
-        match result[0]:
-            case "dijkstra":
-                self.figures[self.cur_img].text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
-                path_vs = g.vs.select(result[2])
-                path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
-                path_vs["color"] = "red"
-                path_es["color"] = "red"
-            case _:
-                raise ValueError
+        if result is not None:
+            title = result[0]
+            match result[0]:
+                case "dijkstra":
+                    self.figures[self.cur_img].text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
+                    path_vs = g.vs.select(result[2])
+                    path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
+                    path_vs["color"] = "red"
+                    path_es["color"] = "red"
+                case _:
+                    raise ValueError
+        else:
+            title = "Граф"
         ig.plot(
             g,
             target=ax,
@@ -224,15 +229,33 @@ class MainWindow(QMainWindow):
         graph_tab_layout.addWidget(self.toolbars[self.cur_img])
         graph_tab_layout.addWidget(self.canvases[self.cur_img])
         graph_tab.setLayout(graph_tab_layout)
-        self.graph_images.addTab(graph_tab, result[0])
+        self.graph_images.addTab(graph_tab, title)
 
     def test(self):
         r_m = algs.reachability_matrix(self.graph)
         print(r_m)
 
-    def alg(self, checked, alg_name):
+    def insert_alg(self, checked, alg_name):
         self.alg_window = AlgWindow(self.graph, alg_name)
-        self.alg_window.show()
+        self.alg_window.exec()
+        command = self.alg_window.command
+        if command == "":
+            return
+        lcl = self.last_command_line
+        if "algs" in self.editor.toPlainText():
+            offset = 0
+            block = self.editor.document().findBlockByLineNumber(lcl)
+            if "}" in block.text():
+                offset = -1
+            cursor = QTextCursor(self.editor.document().findBlockByLineNumber(lcl))
+            cursor.movePosition(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.MoveAnchor)
+            self.editor.setTextCursor(cursor)
+            self.editor.insertPlainText(f"\n{command}")
+            self.last_command_line += 1
+        else:
+            self.editor.moveCursor(QTextCursor.MoveOperation.End)
+            self.editor.insertPlainText(f"\nalgs {{\n {command}\n}}")
+            self.last_command_line += 2
 
     def export_graph(self):
         file_name, file_ext = QFileDialog.getSaveFileName(self, "Экспортировать граф", "", "Изображение PNG(*.png);;Векторное изображение SVG(*.svg);;Все файлы(*)")
@@ -245,26 +268,27 @@ class MainWindow(QMainWindow):
         self.figure.savefig(file_name + file_ext)
 
 
-class AlgWindow(QWidget):
+class AlgWindow(QDialog):
     def __init__(self, g: Graph, alg_name: str):
         super().__init__()
         self.setWindowTitle(alg_name)
         self.setBaseSize(QSize(800, 600))
         self.alg_name = alg_name
         self.graph = g
+        self.command = ""
         layout = QVBoxLayout()
         match alg_name:
             case "dijkstra":
                 start_label = QLabel("Начальная вершина", self)
-                start_vertices = QComboBox()
-                start_vertices.addItems(map(str, g.vertices))
+                self.start_vertices = QComboBox()
+                self.start_vertices.addItems(map(str, g.vertices))
                 end_label = QLabel("Конечная вершина", self)
-                end_vertices = QComboBox()
-                end_vertices.addItems(map(str, g.vertices))
+                self.end_vertices = QComboBox()
+                self.end_vertices.addItems(map(str, g.vertices))
                 layout.addWidget(start_label)
-                layout.addWidget(start_vertices)
+                layout.addWidget(self.start_vertices)
                 layout.addWidget(end_label)
-                layout.addWidget(end_vertices)
+                layout.addWidget(self.end_vertices)
             case "floyd":
                 pass
             case "chinesepostman":
@@ -273,10 +297,20 @@ class AlgWindow(QWidget):
                 pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
-        start_button = QPushButton("Добавить алгоритм", self)
-        start_button.pressed.connect(self.exec)
-        layout.addWidget(start_button)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.buttons.accepted.connect(self.make_command)
+        self.buttons.rejected.connect(self.close)
+        layout.addWidget(self.buttons)
         self.setLayout(layout)
 
-    def exec(self):
-        print(f"{self.alg_name}")
+    def make_command(self):
+        command = []
+        match self.alg_name:
+            case "dijkstra":
+                command.append("dijkstra")
+                s = self.start_vertices.currentIndex()
+                t = self.end_vertices.currentIndex()
+                command.append(self.graph.vertices[s].name)
+                command.append(self.graph.vertices[t].name)
+                self.command = " ".join(command) + ";"
+        self.close()

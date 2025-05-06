@@ -190,6 +190,7 @@ class Parser:
         self.vertex_connections: Dict[Tuple[Vertex, Vertex], int] = {}
         self.commands: List[Command] = []
         self.graph_kind: GraphKind = GraphKind.Directed
+        self.last_command_line: int = -1
 
     def report_parse_err(self, token: Token | None, msg: str) -> NoReturn:
         if token is None:
@@ -217,6 +218,9 @@ class Parser:
         ident = self.consume()
         if ident is None or ident.type != TType.Id:
             self.report_parse_err(ident, "Ожидался идентификатор вершины")
+        
+        if ident.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+            self.report_parse_err(ident, "Зарезервированное имя")
         
         tok = self.consume()
         if tok is None or tok.type == TType.RBrace:
@@ -280,6 +284,8 @@ class Parser:
             self.report_parse_err(tok, "Ожидался идентификатор или список идентификаторов")
 
         if tok.type == TType.Id:
+            if tok.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+                self.report_parse_err(tok, "Зарезервированное имя")
             try:
                 return [self.vertices_dict[tok.value]]
             except KeyError:
@@ -287,6 +293,8 @@ class Parser:
         elif tok.type == TType.LBracket:
             id_list: List[int] = []
             while (t := self.consume()) is not None and t.type == TType.Id:
+                if t.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+                    self.report_parse_err(t, "Зарезервированное имя")
                 try:
                     id_v = self.vertices_dict[t.value]
                     id_list.append(id_v)
@@ -300,6 +308,8 @@ class Parser:
         ident_main = self.consume()
         if ident_main is None or ident_main.type != TType.Id:
             self.report_parse_err(ident_main, "Ожидался идентификатор вершины")
+        if ident_main.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+            self.report_parse_err(ident_main, "Зарезервированное имя")
 
         id_main = 0
         try:
@@ -312,7 +322,6 @@ class Parser:
             self.report_parse_err(ident_main, "Ожидалось :")
 
         conns = self.parse_ident_conn()
-        print("after conns:", self.peek())
 
         weight = self.consume()
         if weight is None or weight.type != TType.Numlit:
@@ -345,6 +354,8 @@ class Parser:
         ident = self.consume()
         if ident is None or ident.type != TType.Id:
             self.report_parse_err(ident, "Ожидалось название алгоритма")
+        if ident.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+            self.report_parse_err(ident, "Зарезервированное имя")
         
         args = []
         while (t := self.peek()) is not None and t.type != TType.Semicolon:
@@ -355,6 +366,7 @@ class Parser:
             self.report_parse_err(tok, "Ожидалась точка с запятой")
 
         self.commands.append(Command(ident, args))
+        self.last_command_line = ident.line
         
     def parse_algs(self):
         # raise NotImplementedError("Алгоритмы в коде не реализованы")
@@ -392,13 +404,17 @@ class Parser:
             else:
                 self.report_parse_err(t, f"Неожиданный идентификатор {t.value}")
 
-def compile(content: str) -> Tuple[Graph, List[Command]]:
+def compile(content: str) -> Tuple[Graph, List[Command], int]:
     lexer = Lexer(content)
     lexer.lex()
     parser = Parser(lexer.tokens)
     parser.parse()
+    if parser.last_command_line > 0:
+        lcl = parser.last_command_line
+    else:
+        lcl = lexer.tokens[-1].line
     # g, commands = Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
-    return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
+    return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands, parser.last_command_line
 
 def report_alg_err(token: Token | None, msg: str) -> NoReturn:
     if token is None:
