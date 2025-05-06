@@ -246,9 +246,10 @@ class MainWindow(QMainWindow):
             offset = 0
             block = self.editor.document().findBlockByLineNumber(lcl)
             if "}" in block.text():
-                offset = -1
+                offset = 1
             cursor = QTextCursor(self.editor.document().findBlockByLineNumber(lcl))
             cursor.movePosition(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.MoveAnchor)
+            cursor.movePosition(QTextCursor.MoveOperation.Left, QTextCursor.MoveMode.MoveAnchor, offset)
             self.editor.setTextCursor(cursor)
             self.editor.insertPlainText(f"\n{command}")
             self.last_command_line += 1
