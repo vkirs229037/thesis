@@ -15,6 +15,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle("Grapher - Новый граф")
+        self.resize(800, 600)
 
         self.graph = None
         self.last_command_line = -1
@@ -29,9 +30,6 @@ class MainWindow(QMainWindow):
         self.fileName: str | None = None
         self.editor.textChanged.connect(self.change_dirty)
         self.button.clicked.connect(self.plot)
-
-        self.test_btn = QPushButton("Тест")
-        self.test_btn.clicked.connect(self.test)
 
         self.alg_name = ""
 
@@ -89,7 +87,6 @@ class MainWindow(QMainWindow):
         graph_editor_layout = QVBoxLayout()
         graph_editor_layout.addWidget(self.editor)
         graph_editor_layout.addWidget(self.button)
-        graph_editor_layout.addWidget(self.test_btn)
         graph_editor.setLayout(graph_editor_layout)
 
         self.graph_images = QTabWidget()
@@ -240,10 +237,6 @@ class MainWindow(QMainWindow):
         graph_tab_layout.addWidget(self.canvases[self.cur_img])
         graph_tab.setLayout(graph_tab_layout)
         self.graph_images.addTab(graph_tab, title)
-
-    def test(self):
-        r_m = algs.reachability_matrix(self.graph)
-        print(r_m)
 
     def insert_alg(self, checked, alg_name):
         self.alg_window = AlgWindow(self.graph, alg_name)
