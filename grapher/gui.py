@@ -74,16 +74,12 @@ class MainWindow(QMainWindow):
         hakimi_action.triggered.connect(lambda checked, arg="hakimi": self.insert_alg(checked, arg))
         neg_cycle_action = QAction("Нахождение циклов отрицательного веса", self)
         neg_cycle_action.triggered.connect(lambda checked, arg="negcycle": self.insert_alg(checked, arg))
-        bfs_action = QAction("Поиск в ширину", self)
-        bfs_action.triggered.connect(lambda checked, arg="bfs": self.insert_alg(checked, arg))
-        dfs_action = QAction("Поиск в глубину", self)
-        dfs_action.triggered.connect(lambda checked, arg="dfs": self.insert_alg(checked, arg))
         all_trees_action = QAction("Все деревья графа", self)
         all_trees_action.triggered.connect(lambda checked, arg="alltrees": self.insert_alg(checked, arg))
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
         
-        algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action, max_indep_action, hakimi_action, neg_cycle_action, bfs_action, dfs_action])
+        algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action, max_indep_action, hakimi_action, neg_cycle_action, all_trees_action, chrom_num_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
