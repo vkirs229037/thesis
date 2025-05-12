@@ -70,8 +70,8 @@ class MainWindow(QMainWindow):
         max_match_action.triggered.connect(lambda checked, arg="maxmatching": self.insert_alg(checked, arg))
         max_indep_action = QAction("Максимальное независимое множество", self)
         max_indep_action.triggered.connect(lambda checked, arg="maxindepset": self.insert_alg(checked, arg))
-        hakimi_action = QAction("Абсолютный центр (метод Хакими)", self)
-        hakimi_action.triggered.connect(lambda checked, arg="hakimi": self.insert_alg(checked, arg))
+        abs_center_action = QAction("Абсолютный p-центр", self)
+        abs_center_action.triggered.connect(lambda checked, arg="abscenter": self.insert_alg(checked, arg))
         neg_cycle_action = QAction("Нахождение циклов отрицательного веса", self)
         neg_cycle_action.triggered.connect(lambda checked, arg="negcycle": self.insert_alg(checked, arg))
         all_trees_action = QAction("Все деревья графа", self)
@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
         
-        algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action, max_indep_action, hakimi_action, neg_cycle_action, all_trees_action, chrom_num_action])
+        algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action, chrom_num_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
