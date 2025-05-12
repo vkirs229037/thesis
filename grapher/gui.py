@@ -80,8 +80,17 @@ class MainWindow(QMainWindow):
         all_trees_action.triggered.connect(lambda checked, arg="alltrees": self.insert_alg(checked, arg))
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
-        
         algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action, chrom_num_action])
+
+        propertyMenu = actionMenu.addMenu("Свойства графа")
+
+        planarity_action = QAction("Планарность графа", self)
+        planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
+        degrees_action = QAction("Степени вершин", self)
+        degrees_action.triggered.connect(lambda checked, arg="degrees": self.insert_alg(checked, arg))
+        euler_action = QAction("Эйлеровость графа", self)
+        euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
+        propertyMenu.addActions([planarity_action, degrees_action, euler_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
