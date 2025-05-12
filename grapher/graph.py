@@ -30,6 +30,13 @@ class Graph:
         self.edges = vertex_connections
         for pair, weight in self.edges.items():
             self.incidence_matrix[pair[0], pair[1]] = weight
+            if kind == GraphKind.Undirected:
+                self.incidence_matrix[pair[1], pair[0]] = weight
+        if kind == GraphKind.Undirected:
+            es = {}
+            for kvp in self.edges.items():
+                es[(kvp[0][1], kvp[0][0])] = kvp[1]
+            self.edges.update(es)
         self.kind = kind
 
     def to_ig_graph(self):
@@ -61,7 +68,14 @@ class Graph:
                 g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
                 return g
             case GraphKind.Undirected:
-                g = ig.Graph(self.n, self.edges, directed=False)
+                es = []
+                for edge in self.edges:
+                    if (edge[1], edge[0]) in self.edges and self.incidence_matrix[edge[0], edge[1]] == self.incidence_matrix[edge[1], edge[0]]:
+                        if edge[0] < edge[1]:
+                            es.append(edge)
+                    else:
+                        es.append(edge)
+                g = ig.Graph(self.n, es, directed=False)
                 g.vs["name"] = list(map(lambda v: v.name, self.vertices))
                 g.vs["label"] = list(map(lambda v: v.label, self.vertices))
                 g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
@@ -85,3 +99,6 @@ class Graph:
 
     def __getitem__(self, tup):
         return self.incidence_matrix[tup]
+    
+    def __setitem__(self, tup, val):
+        self.incidence_matrix[tup] = val
