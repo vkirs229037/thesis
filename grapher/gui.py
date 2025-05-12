@@ -64,6 +64,8 @@ class MainWindow(QMainWindow):
         dijkstra_action.triggered.connect(lambda checked, arg="dijkstra": self.insert_alg(checked, arg))
         floyd_action = QAction("Алгоритм Флойда", self)
         floyd_action.triggered.connect(lambda checked, arg="floyd": self.insert_alg(checked, arg))
+        fleury_action = QAction("Нахождение эйлерового цикла", self)
+        fleury_action.triggered.connect(lambda checked, arg="fleury": self.insert_alg(checked, arg))
         chinese_post_action = QAction("Задача китайского почтальона", self)
         chinese_post_action.triggered.connect(lambda checked, arg="chinesepostman": self.insert_alg(checked, arg))
         max_match_action = QAction("Максимальные паросочетания", self)
@@ -79,7 +81,7 @@ class MainWindow(QMainWindow):
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
         
-        algMenu.addActions([dijkstra_action, floyd_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action, chrom_num_action])
+        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action, chrom_num_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
@@ -210,6 +212,11 @@ class MainWindow(QMainWindow):
                     path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
                     path_vs["color"] = "red"
                     path_es["color"] = "red"
+                case "fleury":
+                    cycle = ", ".join([f"{g.vs["name"][t[0]]} - {g.vs["name"][t[1]]}" for t in result[1]])
+                    self.figures[self.cur_img].text(0.05, 0.05, f"Цикл: {cycle}")
+                    cycle_es = g.es.select(_source_in = [t[0] for t in result[1]], _target_in = [t[1] for t in result[1]])
+                    cycle_es["color"] = "red"
                 case _:
                     raise ValueError
         else:
@@ -299,6 +306,8 @@ class AlgWindow(QDialog):
                 pass
             case "maxmatching":
                 pass
+            case "fleury":
+                pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -317,4 +326,6 @@ class AlgWindow(QDialog):
                 command.append(self.graph.vertices[s].name)
                 command.append(self.graph.vertices[t].name)
                 self.command = " ".join(command) + ";"
+            case "fleury":
+                self.command = "fleury;"
         self.close()
