@@ -1,7 +1,8 @@
 from graph import Graph, GraphKind, Vertex
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 import numpy as np
 import random
+import copy
 
 ###
 ### Задачи
@@ -185,3 +186,11 @@ def degrees(g: Graph) -> list[int]:
             degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
         result.append(degree)
     return result
+
+# Определение хроматического числа и раскраска графа
+def chrom_num(g: Graph) -> Dict[int, int]:
+    # colors = [v.id for v in g.vertices]
+    # vs = [v.id for v in g.vertices]
+    # result = {vs[0]: 0}
+    # for v in vs[1:]:
+    raise NotImplementedError
