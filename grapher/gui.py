@@ -91,11 +91,9 @@ class MainWindow(QMainWindow):
         planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
         euler_action = QAction("Эйлеровость графа", self)
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
-        hamilton_action = QAction("Гамильтоновость графа", self)
-        hamilton_action.triggered.connect(lambda checked, arg="hamiltonness": self.insert_alg(checked, arg))
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
-        propertyMenu.addActions([planarity_action, degrees_action, euler_action, chrom_num_action])
+        propertyMenu.addActions([degrees_action, connected_action, planarity_action, euler_action, chrom_num_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
