@@ -449,6 +449,9 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
                 report_alg_err(None, "Граф не эйлеровый")
             cycle = algs.fleury(g)
             result += [cycle]
+        case "degrees":
+            degrees = algs.degrees(g)
+            result += [degrees]
         case _:
             raise ValueError("Неизвестное название алгоритма")
     result.insert(0, com.func_name.value)

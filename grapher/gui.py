@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         neg_cycle_action.triggered.connect(lambda checked, arg="negcycle": self.insert_alg(checked, arg))
         all_trees_action = QAction("Все деревья графа", self)
         all_trees_action.triggered.connect(lambda checked, arg="alltrees": self.insert_alg(checked, arg))
-        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action, chrom_num_action])
+        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action])
 
         propertyMenu = actionMenu.addMenu("Свойства графа")
 
@@ -226,6 +226,10 @@ class MainWindow(QMainWindow):
                     self.figures[self.cur_img].text(0.05, 0.05, f"Цикл: {cycle}")
                     cycle_es = g.es.select(_source_in = [t[0] for t in result[1]], _target_in = [t[1] for t in result[1]])
                     cycle_es["color"] = "red"
+                case "degrees":
+                    self.figures[self.cur_img].text(0.05, 0.05, f"Степени вершин написаны над ними")
+                    for i, dot in enumerate(layout.coords):
+                        ax.text(dot[0], dot[1] + vertex_size*0.0025, result[1][i], transform=ax.transData)
                 case _:
                     raise ValueError
         else:
@@ -317,6 +321,8 @@ class AlgWindow(QDialog):
                 pass
             case "fleury":
                 pass
+            case "degrees":
+                pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -337,4 +343,6 @@ class AlgWindow(QDialog):
                 self.command = " ".join(command) + ";"
             case "fleury":
                 self.command = "fleury;"
+            case "degrees":
+                self.command = "degrees;"
         self.close()

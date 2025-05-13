@@ -170,3 +170,13 @@ def is_euler(g: Graph) -> bool:
         if degree % 2 != 0:
             return False
     return True
+
+# Степени всех вершин графа
+def degrees(g: Graph) -> list[int]:
+    result = []
+    for v in g.vertices:
+        degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+        if g.kind == GraphKind.Directed:
+            degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
+        result.append(degree)
+    return result
