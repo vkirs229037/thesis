@@ -98,9 +98,9 @@ def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
             r_m = reachability_matrix(g)
             if r_m[v, w] == 0:
                 # Нашли мост
-                g.edges[(v, w)] = c
-                g[v, w] = c
                 bridges.add((v, w))
+            g.edges[(v, w)] = c
+            g[v, w] = c
         non_bridges = edges - bridges
         if len(non_bridges) == 0:
             result.append(list(bridges)[0])
@@ -163,12 +163,17 @@ def chinesepostman(g: Graph) -> List[int]:
 
 # Является ли граф эйлеровым
 def is_euler(g: Graph) -> bool:
-    for v in g.vertices:
-        degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
-        if g.kind == GraphKind.Directed:
-            degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
-        if degree % 2 != 0:
-            return False
+    if g.kind == GraphKind.Directed:
+        for v in g.vertices:
+            degree_in = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+            degree_out = np.sum(np.where(g[:, v.id] != 0, 1, 0))
+            if degree_in != degree_out:
+                return False
+    else:
+        for v in g.vertices:
+            degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+            if degree % 2 != 0:
+                return False
     return True
 
 # Степени всех вершин графа
