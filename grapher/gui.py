@@ -281,17 +281,32 @@ class MainWindow(QMainWindow):
         raw_result = self.results[self.cur_img]
         title = raw_result[0]
         result = []
+        headers = None
         match raw_result[0]:
+            case "dijkstra":
+                dist = raw_result[1]
+                path = " - ".join([f"{self.graph.vertices[i].name}" for i in raw_result[2]])
+                result.append(("text", "Кратчайший путь", f"Расстояние: {dist}\nПуть: {path}"))
+            case "degrees":
+                degs = "\n".join([f"{self.graph.vertices[i].name}: {raw_result[1][i]}" for i in range(self.graph.n)])
+                result.append(("text", "Степени вершин", degs))
+            case "eulerness":
+                if raw_result[1]:
+                    answer = "Граф эйлеров"
+                else:
+                    answer = "Граф не эйлеров"
+                result.append(("text", "Эйлеровость графа", answer))
             case "floyd":
                 v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
                 headers = list(map(lambda v: str(v), v_names))
                 result.append(("table", "Таблица расстояний", raw_result[1][0]))
                 result.append(("table", "Таблица путей", v_names[raw_result[1][1]]))
             case "fleury":
-                headers = None
                 cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw_result[1]])
                 print(cycle)
                 result.append(("text", "Эйлеров цикл", cycle))
+            case _:
+                raise NotImplementedError
         self.res_window = ResultWindow(title, result, headers)
         self.res_window.show()
 
