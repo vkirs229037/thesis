@@ -4,13 +4,13 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import igraph as ig
 from PyQt6.QtCore import QSize, QAbstractTableModel, Qt
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView
+from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView, QHeaderView
 from PyQt6.QtGui import QAction, QKeySequence, QTextCursor
 from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
-import algs
 import os
 from typing import Tuple, Any
+import numpy as np
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -283,13 +283,16 @@ class MainWindow(QMainWindow):
         result = []
         match raw_result[0]:
             case "floyd":
+                v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
+                headers = list(map(lambda v: str(v), v_names))
                 result.append(("table", "Таблица расстояний", raw_result[1][0]))
-                result.append(("table", "Таблица путей", raw_result[1][1]))
+                result.append(("table", "Таблица путей", v_names[raw_result[1][1]]))
             case "fleury":
+                headers = None
                 cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw_result[1]])
                 print(cycle)
                 result.append(("text", "Эйлеров цикл", cycle))
-        self.res_window = ResultWindow(title, result)
+        self.res_window = ResultWindow(title, result, headers)
         self.res_window.show()
 
     def insert_alg(self, checked, alg_name):
@@ -385,14 +388,18 @@ class AlgWindow(QDialog):
 
 
 class TableModel(QAbstractTableModel):
-    def __init__(self, data):
+    def __init__(self, data, headers = None):
         super().__init__()
         self._data = data
+        self.custom_headers = headers
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            value = int(self._data[index.row()][index.column()])
-            return value
+            value = self._data[index.row()][index.column()]
+            if isinstance(value, np.int64):
+                return int(value)
+            else:
+                return str(value)
         
     def rowCount(self, index):
         return len(self._data)
@@ -402,8 +409,13 @@ class TableModel(QAbstractTableModel):
             return 0
         return len(self._data[0])
 
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self.custom_headers[section]
+        return super().headerData(section, orientation, role)
+
 class ResultWindow(QDialog):
-    def __init__(self, title: str, result: list[Tuple[str, str, Any]]):
+    def __init__(self, title: str, result: list[Tuple[str, str, Any]], headers: list[str] | None):
         super().__init__()
         self.setWindowTitle(title)
         layout = QVBoxLayout()
@@ -415,7 +427,9 @@ class ResultWindow(QDialog):
             match dt:
                 case "table":
                     table = QTableView(self)
-                    model = TableModel(data)
+                    model = TableModel(data, headers)
+                    table_header = table.horizontalHeader()
+                    table_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
                     table.setModel(model)
                     tab_layout.addWidget(table)
                 case "text":
