@@ -441,14 +441,14 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
                 report_alg_err(t_v, "Вершина не определена")
             r_m = algs.reachability_matrix(g)
             if r_m[s, t] == 0:
-                report_alg_err(None, f"Между вершинами {s_v.value} и {t_v.value} не может быть найден путь")
+                report_alg_err(com.func_name, f"Между вершинами {s_v.value} и {t_v.value} не может быть найден путь")
             d, path = algs.dijkstra(g, s, t)
             result += [d, path]
         case "floyd":
             result += [algs.floyd(g)]
         case "fleury":
             if not algs.is_euler(g):
-                report_alg_err(None, "Граф не эйлеровый")
+                report_alg_err(com.func_name, "Граф не эйлеровый")
             cycle = algs.fleury(g)
             result += [cycle]
         case "degrees":
@@ -456,7 +456,7 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             result += [degrees]
         case "chromnum":
             if g.kind != GraphKind.Undirected:
-                report_alg_err(None, "Граф должен быть неориентированным")
+                report_alg_err(com.func_name, "Граф должен быть неориентированным")
             raise NotImplementedError
         case _:
             raise ValueError("Неизвестное название алгоритма")

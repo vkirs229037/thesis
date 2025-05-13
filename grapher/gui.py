@@ -194,11 +194,17 @@ class MainWindow(QMainWindow):
         content = self.editor.toPlainText()
         try:
             graph, commands, self.last_command_line = compile(content)
-            alg_results = [exec_alg(graph, c) for c in commands]
-        except (LexError, ParseError, ValueError) as e:
+        except (LexError, ParseError):
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
             return
+        alg_results = []
+        for c in commands:
+            try:
+                alg_results.append(exec_alg(graph, c))
+            except ValueError as e:
+                msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
+                msgbox.exec()
         print(alg_results)
         ig_graph = graph.to_ig_graph()
         graph.print()
