@@ -3,6 +3,9 @@ from typing import Tuple, List
 import numpy as np
 import random
 
+###
+### Задачи
+###
 def connections(g: Graph, v: int) -> set[int]:
     n = g.n
     s = set()
@@ -58,16 +61,6 @@ def dijkstra(g: Graph, s: int, t: int) -> Tuple[int, List[int]]:
                 break
     path.reverse()
     return (d, path)
-
-# Является ли граф эйлеровым
-def is_euler(g: Graph) -> bool:
-    for v in g.vertices:
-        degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
-        if g.kind == GraphKind.Directed:
-            degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
-        if degree % 2 != 0:
-            return False
-    return True
 
 # Алгоритм Флёри
 # Предполагается что уже прошла проверка на эйлеровость графа
@@ -163,3 +156,17 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
 # Задача китайского почтальона
 def chinesepostman(g: Graph) -> List[int]:
     raise NotImplementedError
+
+### 
+### Свойства
+###
+
+# Является ли граф эйлеровым
+def is_euler(g: Graph) -> bool:
+    for v in g.vertices:
+        degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+        if g.kind == GraphKind.Directed:
+            degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
+        if degree % 2 != 0:
+            return False
+    return True
