@@ -105,6 +105,7 @@ class MainWindow(QMainWindow):
         graph_editor.setLayout(graph_editor_layout)
 
         self.graph_images = QTabWidget()
+        self.graph_images.currentChanged.connect(self.on_tab_change)
         
         workspace_layout.addWidget(graph_editor)
         workspace_layout.addWidget(self.graph_images)
@@ -115,6 +116,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(workspace)
         container.setLayout(layout)
         self.setCentralWidget(container)
+    
+    def on_tab_change(self, i):
+        self.cur_img = i
 
     def change_dirty(self):
         if not self.dirty:
@@ -263,12 +267,30 @@ class MainWindow(QMainWindow):
         self.canvases.append(canvas)
         toolbar = NavigationToolbar(self.canvases[self.cur_img])
         self.toolbars.append(toolbar)
+        open_result_btn = QPushButton("Показать результат")
+        open_result_btn.pressed.connect(self.show_current_result)
         graph_tab = QWidget()
         graph_tab_layout = QVBoxLayout()
         graph_tab_layout.addWidget(self.toolbars[self.cur_img])
         graph_tab_layout.addWidget(self.canvases[self.cur_img])
+        graph_tab_layout.addWidget(open_result_btn)
         graph_tab.setLayout(graph_tab_layout)
         self.graph_images.addTab(graph_tab, title)
+
+    def show_current_result(self):
+        raw_result = self.results[self.cur_img]
+        title = raw_result[0]
+        result = []
+        match raw_result[0]:
+            case "floyd":
+                result.append(("table", "Таблица расстояний", raw_result[1]))
+                result.append(("table", "Таблица путей", raw_result[2]))
+            case "fleury":
+                cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw_result[1]])
+                print(cycle)
+                result.append(("text", "Эйлеров цикл", cycle))
+        self.res_window = ResultWindow(title, result)
+        self.res_window.show()
 
     def insert_alg(self, checked, alg_name):
         self.alg_window = AlgWindow(self.graph, alg_name)
@@ -398,6 +420,7 @@ class ResultWindow(QDialog):
                 case "text":
                     text = QPlainTextEdit(self)
                     text.setPlainText(data)
+                    text.setReadOnly(True)
                     tab_layout.addWidget(text)
             tab.setLayout(tab_layout)
             self.tabs.addTab(tab, header)
