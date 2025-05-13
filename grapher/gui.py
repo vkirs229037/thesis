@@ -83,12 +83,16 @@ class MainWindow(QMainWindow):
 
         propertyMenu = actionMenu.addMenu("Свойства графа")
 
-        planarity_action = QAction("Планарность графа", self)
-        planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
         degrees_action = QAction("Степени вершин", self)
         degrees_action.triggered.connect(lambda checked, arg="degrees": self.insert_alg(checked, arg))
+        connected_action = QAction("Связность графа", self)
+        connected_action.triggered.connect(lambda checked, arg="connectivity": self.insert_alg(checked, arg))
+        planarity_action = QAction("Планарность графа", self)
+        planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
         euler_action = QAction("Эйлеровость графа", self)
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
+        hamilton_action = QAction("Гамильтоновость графа", self)
+        hamilton_action.triggered.connect(lambda checked, arg="hamiltonness": self.insert_alg(checked, arg))
         chrom_num_action = QAction("Хроматическое число графа", self)
         chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
         propertyMenu.addActions([planarity_action, degrees_action, euler_action, chrom_num_action])
