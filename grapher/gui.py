@@ -3,8 +3,8 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import igraph as ig
-from PyQt6.QtCore import QSize
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget
+from PyQt6.QtCore import QSize, QAbstractTableModel, Qt
+from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView
 from PyQt6.QtGui import QAction, QKeySequence, QTextCursor
 from compiler import compile, ParseError, LexError, exec_alg
 from graph import Graph
@@ -31,6 +31,7 @@ class MainWindow(QMainWindow):
         self.fileName: str | None = None
         self.editor.textChanged.connect(self.change_dirty)
         self.button.clicked.connect(self.plot)
+        self.results = []
 
         self.alg_name = ""
 
@@ -200,6 +201,7 @@ class MainWindow(QMainWindow):
         if len(alg_results) == 0:
             self.plot_one(ig_graph, None)
         else:
+            self.results = alg_results
             for r in alg_results:
                 self.plot_one(ig_graph, r)
         self.graph = graph
@@ -230,6 +232,8 @@ class MainWindow(QMainWindow):
                     path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
                     path_vs["color"] = "red"
                     path_es["color"] = "red"
+                case "floyd":
+                    raise NotImplementedError
                 case "fleury":
                     cycle = ", ".join([f"{g.vs["name"][t[0]]} - {g.vs["name"][t[1]]}" for t in result[1]])
                     self.draw_figure_text(f"Цикл: {cycle}")
@@ -349,8 +353,56 @@ class AlgWindow(QDialog):
                 command.append(self.graph.vertices[s].name)
                 command.append(self.graph.vertices[t].name)
                 self.command = " ".join(command) + ";"
+            case "floyd":
+                self.command = "floyd;"
             case "fleury":
                 self.command = "fleury;"
             case "degrees":
                 self.command = "degrees;"
         self.close()
+
+
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            value = self._data[index.row()][index.column()]
+            return value
+        
+    def rowCount(self, index):
+        return len(self._data)
+    
+    def columnCount(self, index):
+        if self.rowCount(0) == 0:
+            return 0
+        return len(self._data[0])
+
+class ResultWindow(QDialog):
+    def __init__(self, title: str, result: list[Tuple[str, str, Any]]):
+        super().__init__()
+        self.setWindowTitle(title)
+        layout = QVBoxLayout()
+        self.tabs = QTabWidget()
+        for dt, header, data in result:
+            tab = QWidget()
+            tab_layout = QVBoxLayout()
+            match dt:
+                case "table":
+                    table = QTableView(self)
+                    model = QAbstractTableModel(self, data)
+                    table.setModel(model)
+                    tab_layout.addWidget(table)
+                case "text":
+                    text = QPlainTextEdit(self)
+                    text.setPlainText(data)
+                    tab_layout.addWidget(text)
+            tab.setLayout(tab_layout)
+            self.tabs.addTab(tab, header)
+        layout.addWidget(self.tabs)
+        btn = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok, self)
+        btn.accepted.connect(self.close)
+        layout.addWidget(btn)
+        self.setLayout(layout)
