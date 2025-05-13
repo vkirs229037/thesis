@@ -444,6 +444,8 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
                 report_alg_err(None, f"Между вершинами {s_v.value} и {t_v.value} не может быть найден путь")
             d, path = algs.dijkstra(g, s, t)
             result += [d, path]
+        case "floyd":
+            result += [algs.floyd(g)]
         case "fleury":
             if not algs.is_euler(g):
                 report_alg_err(None, "Граф не эйлеровый")

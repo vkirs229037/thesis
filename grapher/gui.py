@@ -237,7 +237,7 @@ class MainWindow(QMainWindow):
                     path_vs["color"] = "red"
                     path_es["color"] = "red"
                 case "floyd":
-                    raise NotImplementedError
+                    self.draw_figure_text("Результат отобразится по нажатию кнопки \"Показать результат\"")
                 case "fleury":
                     cycle = ", ".join([f"{g.vs["name"][t[0]]} - {g.vs["name"][t[1]]}" for t in result[1]])
                     self.draw_figure_text(f"Цикл: {cycle}")
@@ -283,8 +283,8 @@ class MainWindow(QMainWindow):
         result = []
         match raw_result[0]:
             case "floyd":
-                result.append(("table", "Таблица расстояний", raw_result[1]))
-                result.append(("table", "Таблица путей", raw_result[2]))
+                result.append(("table", "Таблица расстояний", raw_result[1][0]))
+                result.append(("table", "Таблица путей", raw_result[1][1]))
             case "fleury":
                 cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw_result[1]])
                 print(cycle)
@@ -391,7 +391,7 @@ class TableModel(QAbstractTableModel):
 
     def data(self, index, role):
         if role == Qt.ItemDataRole.DisplayRole:
-            value = self._data[index.row()][index.column()]
+            value = int(self._data[index.row()][index.column()])
             return value
         
     def rowCount(self, index):
@@ -409,12 +409,13 @@ class ResultWindow(QDialog):
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
         for dt, header, data in result:
+            print(data)
             tab = QWidget()
             tab_layout = QVBoxLayout()
             match dt:
                 case "table":
                     table = QTableView(self)
-                    model = QAbstractTableModel(self, data)
+                    model = TableModel(data)
                     table.setModel(model)
                     tab_layout.addWidget(table)
                 case "text":

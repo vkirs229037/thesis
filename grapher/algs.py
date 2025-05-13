@@ -63,6 +63,33 @@ def dijkstra(g: Graph, s: int, t: int) -> Tuple[int, List[int]]:
     path.reverse()
     return (d, path)
 
+# Алгоритм Флойда
+def floyd(g: Graph) -> Tuple[np.ndarray, np.ndarray] | bool:
+    c = copy.deepcopy(g[:, :])
+    vs = np.array(list(map(lambda v: v.id, g.vertices)))
+    theta = np.repeat(vs.reshape(-1, 1), g.n, axis=1)
+    print(theta)
+    c[c == 0] = np.iinfo(np.int32).max
+    k = 0
+    while k != g.n:
+        for i in range(g.n):
+            if k == i or c[i, k] == np.inf:
+                continue
+            for j in range(g.n):
+                if j == i or c[k, j] == np.inf: 
+                    continue
+                s = c[i, k] + c[k, j]
+                cij = c[i, j]
+                if s < cij:
+                    c[i, j] = s
+                    theta[i, j] = theta[k, j]
+            if c[i, i] < 0:
+                return False
+        k += 1
+    c[c >= np.iinfo(np.int32).max] = 0
+    return c, theta
+
+
 # Алгоритм Флёри
 # Предполагается что уже прошла проверка на эйлеровость графа
 def fleury(g: Graph) -> List[Tuple[int, int]]:
