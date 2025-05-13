@@ -1,6 +1,7 @@
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 import igraph as ig
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget
@@ -201,6 +202,12 @@ class MainWindow(QMainWindow):
                 self.plot_one(ig_graph, r)
         self.graph = graph
 
+    def draw_ax_text(self, ax: Axes, text: str, pos_x: float, pos_y: float, color: str = "k"):
+        ax.text(pos_x, pos_y, text, ha="center", va="baseline", c=color)
+
+    def draw_figure_text(self, text: str):
+        self.figures[self.cur_img].text(0.05, 0.05, text)
+
     def plot_one(self, g: ig.Graph, result: Tuple[Any] | None):
         print(result)
         f = Figure()
@@ -216,20 +223,19 @@ class MainWindow(QMainWindow):
             title = result[0]
             match result[0]:
                 case "dijkstra":
-                    self.figures[self.cur_img].text(0.05, 0.05, f"Длина кратчайшего пути: {result[1]}")
+                    self.draw_figure_text(f"Длина кратчайшего пути: {result[1]}")
                     path_vs = g.vs.select(result[2])
                     path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
                     path_vs["color"] = "red"
                     path_es["color"] = "red"
                 case "fleury":
                     cycle = ", ".join([f"{g.vs["name"][t[0]]} - {g.vs["name"][t[1]]}" for t in result[1]])
-                    self.figures[self.cur_img].text(0.05, 0.05, f"Цикл: {cycle}")
+                    self.draw_figure_text(f"Цикл: {cycle}")
                     cycle_es = g.es.select(_source_in = [t[0] for t in result[1]], _target_in = [t[1] for t in result[1]])
                     cycle_es["color"] = "red"
                 case "degrees":
-                    self.figures[self.cur_img].text(0.05, 0.05, f"Степени вершин написаны над ними")
                     for i, dot in enumerate(layout.coords):
-                        ax.text(dot[0], dot[1] + vertex_size*0.0025, result[1][i], transform=ax.transData)
+                        self.draw_ax_text(ax, result[1][i], dot[0], dot[1] + vertex_size*0.003, "r")
                 case _:
                     raise ValueError
         else:
@@ -246,7 +252,7 @@ class MainWindow(QMainWindow):
             edge_color=g.es["color"]
         )
         for i, dot in enumerate(layout.coords):
-            ax.text(dot[0] - vertex_size*0.001, dot[1] - vertex_size*0.0025, g.vs["label"][i], transform=ax.transData)
+            self.draw_ax_text(ax, g.vs["label"][i], dot[0], dot[1] - vertex_size*0.005)
         canvas = FigureCanvas(self.figures[self.cur_img])
         self.canvases.append(canvas)
         toolbar = NavigationToolbar(self.canvases[self.cur_img])
