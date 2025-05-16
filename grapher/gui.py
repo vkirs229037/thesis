@@ -134,7 +134,6 @@ class MainWindow(QMainWindow):
     def toggle_menu(self, value: bool):
         self.export_action.setEnabled(value)
         self.save_result_action.setEnabled(value)
-        self.actionMenu.setEnabled(value)
     
     def on_tab_change(self, i):
         self.cur_img = i
