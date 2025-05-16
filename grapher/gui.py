@@ -339,7 +339,21 @@ class MainWindow(QMainWindow):
         filename, _ = QFileDialog.getSaveFileName(self, "Сохранить результаты анализа", "", "Текстовый файл(*.txt);;Все файлы(*)")
         filename = filename.removesuffix(".txt")
         with open(self.fileName + ".txt", "w") as f:
-            f.write()
+            v_names = list(map(lambda v: v.name, self.graph.vertices))
+            report = []
+            for result in self.results:
+                h_r_res = self.human_readable_result(result[0], result[1:])
+                report.append(ALG_NAME_TABLE[result[0]])
+                for data in h_r_res:
+                    match data[0]:
+                        case "text":
+                            report.append(data[2])
+                        case "table":
+                            report.append(data[1])
+                            df = DataFrame(data[2], columns=v_names, index=v_names)
+                            report.append(str(df))
+                report.append("\n")
+            f.write("\n".join(report))
 
     def insert_alg(self, checked, alg_name):
         self.alg_window = AlgWindow(self.graph, alg_name)
