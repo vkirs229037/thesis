@@ -365,7 +365,7 @@ class MainWindow(QMainWindow):
             f.write("\n".join(report))
 
     def insert_alg(self, checked, alg_name):
-        self.alg_window = AlgWindow(self.graph, alg_name)
+        self.alg_window = AlgWindow(self.graph, ALG_NAME_TABLE[alg_name])
         self.alg_window.exec()
         command = self.alg_window.command
         if command == "":
