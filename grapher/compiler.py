@@ -446,6 +446,8 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             result += [d, path]
         case "floyd":
             result += [algs.floyd(g)]
+        case "eulerness":
+            result += [algs.is_euler(g)]
         case "fleury":
             if not algs.is_euler(g):
                 report_alg_err(com.func_name, "Граф не эйлеровый")

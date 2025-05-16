@@ -252,6 +252,12 @@ class MainWindow(QMainWindow):
                 case "degrees":
                     for i, dot in enumerate(layout.coords):
                         self.draw_ax_text(ax, result[1][i], dot[0], dot[1] + vertex_size*0.003, "r")
+                case "eulerness":
+                    if result[1] == True:
+                        answer = "Граф эйлеровый"
+                    else:
+                        answer = "Граф не эйлеровый"
+                    self.draw_figure_text(answer)
                 case _:
                     raise ValueError
         else:
@@ -379,6 +385,8 @@ class AlgWindow(QDialog):
                 pass
             case "fleury":
                 pass
+            case "eulerness":
+                pass
             case "degrees":
                 pass
             case _:
@@ -405,6 +413,10 @@ class AlgWindow(QDialog):
                 self.command = "fleury;"
             case "degrees":
                 self.command = "degrees;"
+            case "eulerness":
+                self.command = "eulerness;"
+            case _:
+                raise ValueError
         self.close()
 
 
