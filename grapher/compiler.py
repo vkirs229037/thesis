@@ -445,7 +445,11 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             d, path = algs.dijkstra(g, s, t)
             result += [d, path]
         case "floyd":
-            result += [algs.floyd(g)]
+            res = algs.floyd(g)
+            if res == False:
+                result += [res]
+            else:
+                result += [res[0], res[1]]
         case "eulerness":
             result += [algs.is_euler(g)]
         case "fleury":

@@ -68,7 +68,6 @@ def floyd(g: Graph) -> Tuple[np.ndarray, np.ndarray] | bool:
     c = copy.deepcopy(g[:, :])
     vs = np.array(list(map(lambda v: v.id, g.vertices)))
     theta = np.repeat(vs.reshape(-1, 1), g.n, axis=1)
-    print(theta)
     c[c == 0] = np.iinfo(np.int32).max
     k = 0
     while k != g.n:

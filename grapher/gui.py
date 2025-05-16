@@ -11,6 +11,15 @@ from graph import Graph
 import os
 from typing import Tuple, Any
 import numpy as np
+from pandas import DataFrame
+
+ALG_NAME_TABLE = {
+    "dijkstra": "Кратчайший путь",
+    "fleury": "Эйлеровый цикл",
+    "floyd": "Все кратчайшие пути",
+    "degrees": "Степени всех вершин",
+    "eulerness": "Эйлеровость графа"
+}
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -49,13 +58,16 @@ class MainWindow(QMainWindow):
         export_action = QAction("Экспорт изображения", self)
         export_action.triggered.connect(self.export_graph)
         export_action.setShortcut(QKeySequence("Ctrl+e"))
+        save_result_action = QAction("Сохранить результаты анализа", self)
+        save_result_action.triggered.connect(self.save_results)
+        save_result_action.setShortcut(QKeySequence("Ctrl+r"))
         exit_action = QAction("Выход", self)
         exit_action.triggered.connect(self.close)
         exit_action.setShortcut(QKeySequence("Ctrl+q"))
         fileMenu = menu.addMenu("Файл")
         fileMenu.addActions([new_action, load_action, save_action])
         fileMenu.addSeparator()
-        fileMenu.addAction(export_action)
+        fileMenu.addActions([export_action, save_result_action])
         fileMenu.addSeparator()
         fileMenu.addAction(exit_action)
 
@@ -205,9 +217,7 @@ class MainWindow(QMainWindow):
             except ValueError as e:
                 msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
                 msgbox.exec()
-        print(alg_results)
         ig_graph = graph.to_ig_graph()
-        graph.print()
         if len(alg_results) == 0:
             self.plot_one(ig_graph, None)
         else:
@@ -215,6 +225,7 @@ class MainWindow(QMainWindow):
             for r in alg_results:
                 self.plot_one(ig_graph, r)
         self.graph = graph
+        self.cur_img = 0
 
     def draw_ax_text(self, ax: Axes, text: str, pos_x: float, pos_y: float, color: str = "k"):
         ax.text(pos_x, pos_y, text, ha="center", va="baseline", c=color)
@@ -223,7 +234,6 @@ class MainWindow(QMainWindow):
         self.figures[self.cur_img].text(0.05, 0.05, text)
 
     def plot_one(self, g: ig.Graph, result: Tuple[Any] | None):
-        print(result)
         f = Figure()
         f.subplots_adjust(left=0, bottom=0, right=1, top=1)
         self.figures.append(f)
@@ -234,7 +244,7 @@ class MainWindow(QMainWindow):
         g.es["color"] = "black"
         g.vs["color"] = "white"
         if result is not None:
-            title = result[0]
+            title = ALG_NAME_TABLE[result[0]]
             match result[0]:
                 case "dijkstra":
                     self.draw_figure_text(f"Длина кратчайшего пути: {result[1]}")
@@ -289,38 +299,47 @@ class MainWindow(QMainWindow):
         graph_tab.setLayout(graph_tab_layout)
         self.graph_images.addTab(graph_tab, title)
 
-    def show_current_result(self):
-        raw_result = self.results[self.cur_img]
-        title = raw_result[0]
+    def human_readable_result(self, alg_name: str, raw: list[Any]) -> list[Tuple[str | np.ndarray]]:
         result = []
-        headers = None
-        match raw_result[0]:
+        match alg_name:
             case "dijkstra":
-                dist = raw_result[1]
-                path = " - ".join([f"{self.graph.vertices[i].name}" for i in raw_result[2]])
+                dist = raw[0]
+                path = " - ".join([f"{self.graph.vertices[i].name}" for i in raw[1]])
                 result.append(("text", "Кратчайший путь", f"Расстояние: {dist}\nПуть: {path}"))
             case "degrees":
-                degs = "\n".join([f"{self.graph.vertices[i].name}: {raw_result[1][i]}" for i in range(self.graph.n)])
+                degs = "\n".join([f"{self.graph.vertices[i].name}: {raw[0][i]}" for i in range(self.graph.n)])
                 result.append(("text", "Степени вершин", degs))
             case "eulerness":
-                if raw_result[1]:
+                if raw[0]:
                     answer = "Граф эйлеров"
                 else:
                     answer = "Граф не эйлеров"
                 result.append(("text", "Эйлеровость графа", answer))
             case "floyd":
                 v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
-                headers = list(map(lambda v: str(v), v_names))
-                result.append(("table", "Таблица расстояний", raw_result[1][0]))
-                result.append(("table", "Таблица путей", v_names[raw_result[1][1]]))
+                result.append(("table", "Таблица расстояний", raw[0]))
+                result.append(("table", "Таблица путей", v_names[raw[1]]))
             case "fleury":
-                cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw_result[1]])
-                print(cycle)
+                cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw[0]])
                 result.append(("text", "Эйлеров цикл", cycle))
             case _:
                 raise NotImplementedError
+        return result
+
+    def show_current_result(self):
+        raw_result = self.results[self.cur_img]
+        title = raw_result[0]
+        result = []
+        headers = list(map(lambda v: v.name, self.graph.vertices))
+        result = self.human_readable_result(raw_result[0], raw_result[1:])
         self.res_window = ResultWindow(title, result, headers)
         self.res_window.show()
+
+    def save_results(self):
+        filename, _ = QFileDialog.getSaveFileName(self, "Сохранить результаты анализа", "", "Текстовый файл(*.txt);;Все файлы(*)")
+        filename = filename.removesuffix(".txt")
+        with open(self.fileName + ".txt", "w") as f:
+            f.write()
 
     def insert_alg(self, checked, alg_name):
         self.alg_window = AlgWindow(self.graph, alg_name)
@@ -454,7 +473,6 @@ class ResultWindow(QDialog):
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
         for dt, header, data in result:
-            print(data)
             tab = QWidget()
             tab_layout = QVBoxLayout()
             match dt:
