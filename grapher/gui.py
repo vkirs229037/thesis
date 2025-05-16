@@ -55,24 +55,24 @@ class MainWindow(QMainWindow):
         save_action = QAction("Сохранить граф", self)
         save_action.triggered.connect(self.save_graph)
         save_action.setShortcut(QKeySequence("Ctrl+s"))
-        export_action = QAction("Экспорт изображения", self)
-        export_action.triggered.connect(self.export_graph)
-        export_action.setShortcut(QKeySequence("Ctrl+e"))
-        save_result_action = QAction("Сохранить результаты анализа", self)
-        save_result_action.triggered.connect(self.save_results)
-        save_result_action.setShortcut(QKeySequence("Ctrl+r"))
+        self.export_action = QAction("Экспорт изображения", self)
+        self.export_action.triggered.connect(self.export_graph)
+        self.export_action.setShortcut(QKeySequence("Ctrl+e"))
+        self.save_result_action = QAction("Сохранить результаты анализа", self)
+        self.save_result_action.triggered.connect(self.save_results)
+        self.save_result_action.setShortcut(QKeySequence("Ctrl+r"))
         exit_action = QAction("Выход", self)
         exit_action.triggered.connect(self.close)
         exit_action.setShortcut(QKeySequence("Ctrl+q"))
         fileMenu = menu.addMenu("Файл")
         fileMenu.addActions([new_action, load_action, save_action])
         fileMenu.addSeparator()
-        fileMenu.addActions([export_action, save_result_action])
+        fileMenu.addActions([self.export_action, self.save_result_action])
         fileMenu.addSeparator()
         fileMenu.addAction(exit_action)
 
-        actionMenu = menu.addMenu("Действия с графом")
-        algMenu = actionMenu.addMenu("Алгоритмы")
+        self.actionMenu = menu.addMenu("Действия с графом")
+        algMenu = self.actionMenu.addMenu("Алгоритмы")
 
         dijkstra_action = QAction("Алгоритм Дейкстры", self)
         dijkstra_action.triggered.connect(lambda checked, arg="dijkstra": self.insert_alg(checked, arg))
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         all_trees_action.triggered.connect(lambda checked, arg="alltrees": self.insert_alg(checked, arg))
         algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action])
 
-        propertyMenu = actionMenu.addMenu("Свойства графа")
+        propertyMenu = self.actionMenu.addMenu("Свойства графа")
 
         degrees_action = QAction("Степени вершин", self)
         degrees_action.triggered.connect(lambda checked, arg="degrees": self.insert_alg(checked, arg))
@@ -128,6 +128,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(workspace)
         container.setLayout(layout)
         self.setCentralWidget(container)
+
+        self.toggle_menu(False)
+
+    def toggle_menu(self, value: bool):
+        self.export_action.setEnabled(value)
+        self.save_result_action.setEnabled(value)
+        self.actionMenu.setEnabled(value)
     
     def on_tab_change(self, i):
         self.cur_img = i
@@ -141,8 +148,10 @@ class MainWindow(QMainWindow):
         self.figures = []
         self.canvases = []
         self.toolbars = []
+        self.results = []
         self.graph_images.clear()
         self.cur_img = -1
+        self.toggle_menu(False)
 
     def save_graph(self):
         code = self.editor.toPlainText()
@@ -226,6 +235,7 @@ class MainWindow(QMainWindow):
                 self.plot_one(ig_graph, r)
         self.graph = graph
         self.cur_img = 0
+        self.toggle_menu(True)
 
     def draw_ax_text(self, ax: Axes, text: str, pos_x: float, pos_y: float, color: str = "k"):
         ax.text(pos_x, pos_y, text, ha="center", va="baseline", c=color)
@@ -338,7 +348,7 @@ class MainWindow(QMainWindow):
     def save_results(self):
         filename, _ = QFileDialog.getSaveFileName(self, "Сохранить результаты анализа", "", "Текстовый файл(*.txt);;Все файлы(*)")
         filename = filename.removesuffix(".txt")
-        with open(self.fileName + ".txt", "w") as f:
+        with open(filename + ".txt", "w") as f:
             v_names = list(map(lambda v: v.name, self.graph.vertices))
             report = []
             for result in self.results:
