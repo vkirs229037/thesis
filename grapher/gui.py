@@ -365,7 +365,7 @@ class MainWindow(QMainWindow):
             f.write("\n".join(report))
 
     def insert_alg(self, checked, alg_name):
-        self.alg_window = AlgWindow(self.graph, ALG_NAME_TABLE[alg_name])
+        self.alg_window = AlgWindow(self.graph, alg_name)
         self.alg_window.exec()
         command = self.alg_window.command
         if command == "":
@@ -401,7 +401,7 @@ class MainWindow(QMainWindow):
 class AlgWindow(QDialog):
     def __init__(self, g: Graph, alg_name: str):
         super().__init__()
-        self.setWindowTitle(alg_name)
+        self.setWindowTitle(ALG_NAME_TABLE[alg_name])
         self.setBaseSize(QSize(800, 600))
         self.alg_name = alg_name
         self.graph = g
@@ -492,7 +492,7 @@ class TableModel(QAbstractTableModel):
 class ResultWindow(QDialog):
     def __init__(self, title: str, result: list[Tuple[str, str, Any]], headers: list[str] | None):
         super().__init__()
-        self.setWindowTitle(title)
+        self.setWindowTitle(ALG_NAME_TABLE[title])
         layout = QVBoxLayout()
         self.tabs = QTabWidget()
         for dt, header, data in result:
