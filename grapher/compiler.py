@@ -464,6 +464,10 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             if g.kind != GraphKind.Undirected:
                 report_alg_err(com.func_name, "Граф должен быть неориентированным")
             raise NotImplementedError
+        case "connectivity":
+            comps = algs.conn_comps(g)
+            n_comps = len(comps)
+            result += [comps, n_comps]
         case _:
             raise ValueError("Неизвестное название алгоритма")
     result.insert(0, com.func_name.value)

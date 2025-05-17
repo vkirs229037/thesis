@@ -1,5 +1,5 @@
 from graph import Graph, GraphKind, Vertex
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Set
 import numpy as np
 import random
 import copy
@@ -183,6 +183,34 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
 # Задача китайского почтальона
 def chinesepostman(g: Graph) -> List[int]:
     raise NotImplementedError
+
+# Общий обход графа с запоминанием вершин
+def walk(g: Graph, p0: int) -> List[int]:
+    r_m = reachability_matrix(g)
+    visited = set([p0])
+    path = [p0]
+    S = [p0]
+    while len(S) > 0:
+        q = S.pop()
+        succs = set(np.nonzero(r_m[q, :])[0])
+        for p in succs:
+            if p not in visited:
+                visited.add(p)
+                S.append(p)
+                path.append(p)
+    return path
+
+# Нахождение компонент связности
+def conn_comps(g: Graph) -> List[Set[int]]:
+    visited = set()
+    comps = []
+    for v in [v.id for v in g.vertices]:
+        if v in visited:
+            continue
+        path = walk(g, v)
+        visited.update(path)
+        comps.append(set(path))    
+    return comps
 
 ### 
 ### Свойства

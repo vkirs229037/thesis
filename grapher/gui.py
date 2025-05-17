@@ -12,13 +12,15 @@ import os
 from typing import Tuple, Any
 import numpy as np
 from pandas import DataFrame
+import utils
 
 ALG_NAME_TABLE = {
     "dijkstra": "Кратчайший путь",
     "fleury": "Эйлеровый цикл",
     "floyd": "Все кратчайшие пути",
     "degrees": "Степени всех вершин",
-    "eulerness": "Эйлеровость графа"
+    "eulerness": "Эйлеровость графа",
+    "connectivity": "Связность графа"
 }
 
 class MainWindow(QMainWindow):
@@ -218,6 +220,7 @@ class MainWindow(QMainWindow):
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
             return
+        self.graph = graph
         alg_results = []
         for c in commands:
             try:
@@ -232,7 +235,6 @@ class MainWindow(QMainWindow):
             self.results = alg_results
             for r in alg_results:
                 self.plot_one(ig_graph, r)
-        self.graph = graph
         self.cur_img = 0
         self.toggle_menu(True)
 
@@ -277,10 +279,26 @@ class MainWindow(QMainWindow):
                     else:
                         answer = "Граф не эйлеровый"
                     self.draw_figure_text(answer)
+                case "connectivity":
+                    answer = "Граф "
+                    if result[2] == 1:
+                        answer += "связный"
+                    else:
+                        answer += "несвязный"
+                    answer += f", число компонент связности {result[2]}"
+                    self.draw_figure_text(answer)
+                    c = 0
+                    for comp in result[1]:
+                        print(comp)
+                        comp_vs = g.vs.select(comp)
+                        comp_vs["color"] = c
+                        c += 1
                 case _:
                     raise ValueError
         else:
             title = "Граф"
+        pal = ig.PrecalculatedPalette([utils.random_color() for _ in range(self.graph.n)])
+        print(pal[0])
         ig.plot(
             g,
             target=ax,
@@ -290,7 +308,8 @@ class MainWindow(QMainWindow):
             vertex_label_dist=0,
             edge_label=g.es["weight"],
             vertex_color=g.vs["color"],
-            edge_color=g.es["color"]
+            edge_color=g.es["color"],
+            palette = pal
         )
         for i, dot in enumerate(layout.coords):
             self.draw_ax_text(ax, g.vs["label"][i], dot[0], dot[1] - vertex_size*0.005)
@@ -331,6 +350,21 @@ class MainWindow(QMainWindow):
             case "fleury":
                 cycle = ", ".join([f"{self.graph.vertices[t[0]].name} - {self.graph.vertices[t[1]].name}" for t in raw[0]])
                 result.append(("text", "Эйлеров цикл", cycle))
+            case "connectivity":
+                answer = "Граф "
+                if raw[1] == 1:
+                    answer += "связный"
+                else:
+                    answer += "несвязный"
+                answer += f", число компонент связности {raw[1]}"
+                result.append(("text", "Связность", answer))
+                v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
+                comps = [v_names[list(c)] for c in raw[0]]
+                comps_str_arr = []
+                for i, comp in enumerate(comps):
+                    comps_str_arr.append(f"Компонента {i + 1}: {", ".join(list(comp))}")
+                comps_str = "\n".join(comps_str_arr)
+                result.append(("text", "Компоненты связности", comps_str))
             case _:
                 raise NotImplementedError
         return result
@@ -435,6 +469,8 @@ class AlgWindow(QDialog):
                 pass
             case "degrees":
                 pass
+            case "connectivity": 
+                pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
@@ -461,6 +497,8 @@ class AlgWindow(QDialog):
                 self.command = "degrees;"
             case "eulerness":
                 self.command = "eulerness;"
+            case "connectivity":
+                self.command = "connectivity;"
             case _:
                 raise ValueError
         self.close()
