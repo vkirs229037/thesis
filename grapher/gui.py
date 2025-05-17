@@ -395,7 +395,11 @@ class MainWindow(QMainWindow):
             file_ext = file_ext[file_ext.index("."):-1]
         else:
             file_ext = ""
-        self.figure.savefig(file_name + file_ext)
+        if len(self.results) == 0:
+            self.figure[0].savefig(file_name + file_ext)
+        else:
+            for fig, res in zip(self.figures, self.results):
+                fig.savefig(file_name + "_" + res[0] + file_ext)
 
 
 class AlgWindow(QDialog):
