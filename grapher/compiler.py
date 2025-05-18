@@ -6,12 +6,9 @@ import algs
 
 class TType(Enum):
     Id = auto()
-    Dash = auto()
     Arrow = auto()
     LBrace = auto()
     RBrace = auto()
-    LParen = auto()
-    RParen = auto()
     LBracket = auto()
     RBracket = auto()
     Semicolon = auto()
@@ -94,12 +91,6 @@ class Lexer:
                     token = Token(TType.Semicolon, ";", self.line, self.col)
                 case ":":
                     token = Token(TType.Colon, ":", self.line, self.col)
-                case "-":
-                    token = Token(TType.Dash, "-", self.line, self.col)
-                case ")":
-                    token = Token(TType.RParen, ")", self.line, self.col)
-                case "(":
-                    token = Token(TType.LParen, "(", self.line, self.col)
                 case "]":
                     token = Token(TType.RBracket, "]", self.line, self.col)
                 case "[":
