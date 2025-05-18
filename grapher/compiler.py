@@ -317,9 +317,9 @@ class Parser:
         except KeyError:
             self.report_parse_err(ident_main, "Неизвестная вершина")
         
-        colon = self.consume()
-        if colon is None or colon.type != TType.Colon:
-            self.report_parse_err(ident_main, "Ожидалось :")
+        arrow = self.consume()
+        if arrow is None or arrow.type != TType.Arrow:
+            self.report_parse_err(ident_main, "Ожидалось >")
 
         conns = self.parse_ident_conn()
 
