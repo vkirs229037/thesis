@@ -99,7 +99,6 @@ def fleury(g: Graph) -> List[Tuple[int, int]]:
 
 def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
     all_edges = list(g.edges.keys())
-    print(g.edges)
     marked = {}
     result = []
     first_edge = random.choice(all_edges)
@@ -108,15 +107,10 @@ def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
     while set(marked.keys()) != set(all_edges):
         e = result[-1]
         v = e[1]
-        print("------------------------")
-        print(v)
-        print(marked)
         conns = np.nonzero(g[v, :])[0]
         edges = set([(v, w) for w in conns if marked.get((v, w)) != True])
-        print(edges)
         bridges = set()
         for w in conns:
-            print(w, marked.get((v, w)))
             if v == w:
                 continue
             c = g.edges[(v, w)]
@@ -139,7 +133,6 @@ def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
 
 def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
     all_edges = list(g.edges.keys())
-    print(g.edges)
     marked = {}
     result = []
     first_edge = random.choice(all_edges)
@@ -149,15 +142,10 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
     while set(marked.keys()) != set(all_edges):
         e = result[-1]
         v = e[1]
-        print("------------------------")
-        print(v)
-        print(marked)
         conns = np.nonzero(g[v, :])[0]
         edges = set([(v, w) for w in conns if marked.get((v, w)) != True or marked.get((w, v)) != True])
-        print(edges)
         bridges = set()
         for w in conns:
-            print(w, marked.get((v, w)))
             if v == w:
                 continue
             c = g[v, w]
