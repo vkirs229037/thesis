@@ -255,7 +255,16 @@ class MainWindow(QMainWindow):
         self.cur_img += 1
         ax = self.figures[self.cur_img].add_subplot()
         layout = g.layout("kamada_kawai")
-        vertex_size = 60
+        match self.graph.n:
+            case n if n < 10:
+                edge_width = 4
+                vertex_size = 60
+            case n if n < 20:
+                edge_width = 2
+                vertex_size = 30
+            case _:
+                edge_width = 1
+                vertex_size = 10
         g.es["color"] = "black"
         g.vs["color"] = "white"
         if result is not None:
