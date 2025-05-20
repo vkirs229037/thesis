@@ -235,43 +235,32 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
     ret_flag = False
     colors = [v.id for v in g.vertices]
     vs = [v.id for v in g.vertices]
-    color_to_v = {0: [vs[0]]}
-    v_to_color = {vs[0]: 0}
+    coloring = {vs[0]: 0}
     for v in vs[1:]:
-        print("v", v)
-        conns = set(np.nonzero(g[v, :])[0])
-        print("conns", conns)
+        conns = np.nonzero(g[v, :])[0]
+        conn_colors = {}
+        for v_c in vs:
+            if (c := coloring.get(v)) is not None and g[v, v_c] != 0:
+                conn_colors.add(c)
         for c in colors:
-            print("c", c, "color_to_v.get(c)", color_to_v.get(c))
-            if color_to_v.get(c) is not None:
-                print("set(color_to_v.get(c)).intersection(conns)", set(color_to_v.get(c)).intersection(conns))
-                if len(set(color_to_v.get(c)).intersection(conns)) == 0:
-                    print(f"adding to color {c}")
-                    if v_to_color.get(v) is not None:
-                        color_to_v[v_to_color[v]].remove(v)
-                    color_to_v[c].append(v)
-                    color_to_v[c].sort()
-                    v_to_color[v] = c
-                    break
-            else:
-                print("new color")
-                color_to_v[c] = [v]
-                v_to_color[v] = c
+            if c not in conn_colors:
+                coloring[v] = c
                 break
-    print("color_to_v", color_to_v)
-    print("v_to_color", v_to_color)
-    cr_num = len(color_to_v)
-    q = cr_num - 1
-    colors = colors[:q + 1]
-#    return cr_num, v_to_color
+    q = max(coloring.values())
+    cr_num = q + 1
+    return cr_num, coloring
     print(f"initial q = {q}")
     ret_v = np.min(color_to_v[q])
     j_k = q
     while ret_v != vs[0]:
         print("ret_v", ret_v)
+        print("all_cons", np.nonzero(g[ret_v, :])[0])
         conns = np.array(list(filter(lambda v: v < ret_v, np.nonzero(g[ret_v, :])[0])))
+        print("conns", conns)
+        if len(conns) == 0:
+            break
         rec_v = np.max(conns)
-        print("conns", conns, "rec_v", rec_v)
+        print("rec_v", rec_v)
         rec_conns = set(np.nonzero(g[ret_v, :])[0])
         rec_c = v_to_color[rec_v]
         for c in colors[rec_c+1:]:
