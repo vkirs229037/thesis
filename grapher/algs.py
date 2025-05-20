@@ -238,86 +238,66 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
     coloring = {vs[0]: 0}
     for v in vs[1:]:
         conns = np.nonzero(g[v, :])[0]
-        conn_colors = {}
-        for v_c in vs:
-            if (c := coloring.get(v)) is not None and g[v, v_c] != 0:
+        conn_colors = set()
+        for v_c in conns:
+            if (c := coloring.get(v_c)) is not None:
                 conn_colors.add(c)
         for c in colors:
             if c not in conn_colors:
                 coloring[v] = c
                 break
-    q = max(coloring.values())
-    cr_num = q + 1
-    return cr_num, coloring
-    print(f"initial q = {q}")
-    ret_v = np.min(color_to_v[q])
-    j_k = q
-    while ret_v != vs[0]:
-        print("ret_v", ret_v)
-        print("all_cons", np.nonzero(g[ret_v, :])[0])
-        conns = np.array(list(filter(lambda v: v < ret_v, np.nonzero(g[ret_v, :])[0])))
-        print("conns", conns)
-        if len(conns) == 0:
-            break
-        rec_v = np.max(conns)
-        print("rec_v", rec_v)
-        rec_conns = set(np.nonzero(g[ret_v, :])[0])
-        rec_c = v_to_color[rec_v]
-        for c in colors[rec_c+1:]:
-            if len(set(color_to_v[c]).intersection(rec_conns)) == 0:
-                if c == q:
-                    print(f"получен j_k {c} == q {q}")
-                    j_k = q
+    colors = list(coloring.values())
+    q = max(colors)
+    def recolor_step(q: int) -> bool:
+        nonlocal ret_flag
+        x_i = next(i for i in range(g.n) if coloring[i] == q)
+        while True:
+            conns = np.nonzero(g[x_i, :])[0]
+            conns_before = np.where(conns < x_i)[0]
+            if len(conns_before) == 0:
+                return False
+            x_k = np.max(conns_before)
+            j_k = coloring[x_k]
+            k_conns = np.nonzero(g[x_k, :])[0]
+            k_conn_colors = set()
+            for v_c in k_conns:
+                k_conn_colors.add(coloring[v_c])
+            j_k_p = j_k + 1
+            for c in colors[j_k+1:]:
+                if c not in k_conn_colors:
+                    j_k_p = c
                     break
-                print(f"найден j_k = {c}, перекраска x_k ({rec_v}) в него")
-                j_k = c
-                color_to_v[c].append(rec_v)
-                color_to_v[c].sort()
-                color_to_v[v_to_color[rec_v]].remove(rec_v)
-                v_to_color[rec_v] = c
-                break
-        else:
-            j_k = q
-        if j_k < q:
-            print("j_k & q", j_k, q)
-            for v in vs[rec_v+1:]:
-                if ret_flag:
-                    break
-                conns = set(np.nonzero(g[v, :])[0])
+            else:
+                x_i = x_k
+                continue
+            coloring[x_k] = j_k_p
+            for v in vs[x_k+1:]:
+                c_v = 1
+                conns = np.nonzero(g[v, :])[0]
+                conn_colors = set()
+                for v_c in conns:
+                    conn_colors.add(coloring[v_c])
                 for c in colors:
-                    if len(set(color_to_v[c]).intersection(conns)) == 0:
-                        if c == q:
-                            j_k = q
-                            print(f"x_i {v} требует q, возврат из нее")
-                            ret_v = v
-                            ret_flag = True
-                            print("color_to_v", color_to_v)
-                            print("v_to_color", v_to_color)
-                            break
-                        print(f"перекраска v {v} в цвет {c}")
-                        color_to_v[c].append(v)
-                        color_to_v[c].sort()
-                        color_to_v[v_to_color[v]].remove(v)
-                        v_to_color[v] = c
+                    if c == q:
+                        x_i = v
+                        ret_flag = True
                         break
-            for _q in color_to_v.keys():
-                if color_to_v[_q] == []:
-                    q = _q - 1
-                    colors = colors[:q + 1]
+                    if c not in conn_colors:
+                        c_v = c
+                        break
+                if ret_flag:
+                    ret_flag = False
                     break
-            print(f"новый q = {q}")
+                coloring[v] = c_v
+            else:
+                return True
+            
+        return False
+    
+    while q > 1:
+        if recolor_step(q):
+            q -= 1
         else:
-            print(f"j_k ({j_k}) == q ({q}) или не найден подходящий j_k, ret_v ({ret_v}) = rec_v (x_k = {rec_v})")
-            print("color_to_v", color_to_v)
-            print("v_to_color", v_to_color)
-            ret_v = rec_v
-            continue
-        if not ret_flag:
-            print("reached end of loop, ret_v = color_to_v[q][-1]")
-            print("color_to_v", color_to_v)
-            print("v_to_color", v_to_color)
-            ret_v = np.min(color_to_v[q])
-        else:
-            ret_flag = False
-    print(color_to_v)
-    return q+1, v_to_color
+            break
+    
+    return q + 1, coloring
