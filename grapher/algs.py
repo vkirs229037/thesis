@@ -232,7 +232,6 @@ def degrees(g: Graph) -> list[int]:
 # Определение хроматического числа и раскраска графа
 def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
     # Первоначальная раскраска
-    ret_flag = False
     colors = [v.id for v in g.vertices]
     vs = [v.id for v in g.vertices]
     coloring = {vs[0]: 0}
@@ -246,11 +245,13 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
             if c not in conn_colors:
                 coloring[v] = c
                 break
-    colors = list(coloring.values())
+    colors = list(set(coloring.values()))
     q = max(colors)
+
     def recolor_step(q: int) -> bool:
-        nonlocal ret_flag
-        x_i = next(i for i in range(g.n) if coloring[i] == q)
+        x_i = next((v for v in vs if coloring[v] == q), None)
+        if x_i is None:
+            return False
         while True:
             conns = np.nonzero(g[x_i, :])[0]
             conns_before = np.where(conns < x_i)[0]
@@ -262,41 +263,32 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
             k_conn_colors = set()
             for v_c in k_conns:
                 k_conn_colors.add(coloring[v_c])
-            j_k_p = j_k + 1
-            for c in colors[j_k+1:]:
-                if c not in k_conn_colors:
-                    j_k_p = c
+            for j_k_p in colors[j_k+1:q]:
+                if j_k_p not in k_conn_colors:
+                    coloring[x_k] = j_k_p
                     break
             else:
                 x_i = x_k
                 continue
-            coloring[x_k] = j_k_p
             for v in vs[x_k+1:]:
-                c_v = 1
                 conns = np.nonzero(g[v, :])[0]
                 conn_colors = set()
                 for v_c in conns:
                     conn_colors.add(coloring[v_c])
-                for c in colors:
-                    if c == q:
-                        x_i = v
-                        ret_flag = True
-                        break
+                for c in colors[:-1]:
                     if c not in conn_colors:
-                        c_v = c
+                        coloring[v] = c
                         break
-                if ret_flag:
-                    ret_flag = False
+                else:
+                    x_i = v
                     break
-                coloring[v] = c_v
             else:
                 return True
-            
         return False
     
     while q > 1:
         if recolor_step(q):
-            q -= 1
+            q = np.max(coloring.values())
         else:
             break
     
