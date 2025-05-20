@@ -216,7 +216,7 @@ class MainWindow(QMainWindow):
         content = self.editor.toPlainText()
         try:
             graph, commands, self.last_command_line = compile(content)
-        except (LexError, ParseError):
+        except (LexError, ParseError) as e:
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
             return
