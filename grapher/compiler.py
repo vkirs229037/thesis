@@ -452,6 +452,9 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             degrees = algs.degrees(g)
             result += [degrees]
         case "chromnum":
+            is_connected = len(algs.conn_comps(g)) == 1
+            if not is_connected:
+                report_alg_err(com.func_name, "Граф должен быть связным")
             if g.kind != GraphKind.Undirected:
                 report_alg_err(com.func_name, "Граф должен быть неориентированным")
             q, d = algs.chrom_num(g)
