@@ -230,9 +230,67 @@ def degrees(g: Graph) -> list[int]:
     return result
 
 # Определение хроматического числа и раскраска графа
-def chrom_num(g: Graph) -> Dict[int, int]:
-    # colors = [v.id for v in g.vertices]
-    # vs = [v.id for v in g.vertices]
-    # result = {vs[0]: 0}
-    # for v in vs[1:]:
+def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
+    # Первоначальная раскраска
+    ret_flag = False
+    colors = [v.id for v in g.vertices]
+    vs = [v.id for v in g.vertices]
+    color_to_v = {0: [vs[0]]}
+    v_to_color = {vs[0]: 0}
+    for v in vs[1:]:
+        print("v", v)
+        conns = set(np.nonzero(g[v, :])[0])
+        for c in colors:
+            print("c", c, "color_to_v.get(c)", color_to_v.get(c))
+            if color_to_v.get(c) is not None:
+                print("set(color_to_v.get(c)).intersection(conns)", set(color_to_v.get(c)).intersection(conns))
+                if len(set(color_to_v.get(c)).intersection(conns)) == 0:
+                    print(f"adding to color {c}")
+                    color_to_v[c].append(v)
+                    v_to_color[v] = c
+            else:
+                print("new color")
+                color_to_v[c] = [v]
+                v_to_color[v] = c
+                break
+    print("color_to_v", color_to_v)
+    q = len(color_to_v) - 1
+    ret_v = color_to_v[q][-1]
+    j_k = q
+    while ret_v != vs[0]:
+        print("ret_v", ret_v)
+        conns = np.array(list(filter(lambda v: v < ret_v, np.nonzero(g[ret_v, :])[0])))
+        rec_v = conns[-1]
+        print("conns", conns, "rec_v", rec_v)
+        rec_conns = set(np.nonzero(g[ret_v, :])[0])
+        for c in colors[v_to_color[rec_v]+1:]:
+            if len(set(color_to_v[c]).intersection(rec_conns)) == 0:
+                j_k = c
+                color_to_v[c].append(rec_v)
+                color_to_v[v_to_color[rec_v]].remove(rec_v)
+                v_to_color[rec_v] = c
+                break
+        if j_k < q:
+            for v in vs[rec_v+1:]:
+                if ret_flag:
+                    break
+                conns = set(np.nonzero(g[v, :])[0])
+                for c in colors:
+                    if len(set(color_to_v[c]).intersection(conns)) == 0:
+                        if c == q:
+                            print("x_k требует ")
+                            ret_v = v
+                            ret_flag = True
+                            break
+                        color_to_v[c].append(v)
+                        color_to_v[v_to_color[v]].remove(v)
+                        v_to_color[v] = c
+            q = list(color_to_v.keys())[-1]
+        else:
+            print("j_k == q или не найден подходящий j_k, ret_v = rec_v (x_k)")
+            ret_v = rec_v
+            continue
+        print("reached end of loop, ret_v = color_to_v[q][-1]")
+        ret_v = color_to_v[q][-1]
+    print(color_to_v)
     raise NotImplementedError

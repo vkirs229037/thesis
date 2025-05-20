@@ -228,6 +228,9 @@ class MainWindow(QMainWindow):
             except ValueError as e:
                 msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
                 msgbox.exec()
+            except NotImplementedError:
+                msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"Алгоритм не реализован!", QMessageBox.StandardButton.Ok)
+                msgbox.exec()
         ig_graph = graph.to_ig_graph()
         if len(alg_results) == 0:
             self.plot_one(ig_graph, None)
