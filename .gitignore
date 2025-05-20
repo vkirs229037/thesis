@@ -5,3 +5,4 @@ out
 mypy.ini
 run
 test
+log*

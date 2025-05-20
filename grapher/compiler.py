@@ -454,7 +454,8 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
         case "chromnum":
             if g.kind != GraphKind.Undirected:
                 report_alg_err(com.func_name, "Граф должен быть неориентированным")
-            algs.chrom_num(g)
+            q, d = algs.chrom_num(g)
+            result += [q, d]
         case "connectivity":
             comps = algs.conn_comps(g)
             n_comps = len(comps)

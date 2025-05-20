@@ -240,37 +240,57 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
     for v in vs[1:]:
         print("v", v)
         conns = set(np.nonzero(g[v, :])[0])
+        print("conns", conns)
         for c in colors:
             print("c", c, "color_to_v.get(c)", color_to_v.get(c))
             if color_to_v.get(c) is not None:
                 print("set(color_to_v.get(c)).intersection(conns)", set(color_to_v.get(c)).intersection(conns))
                 if len(set(color_to_v.get(c)).intersection(conns)) == 0:
                     print(f"adding to color {c}")
+                    if v_to_color.get(v) is not None:
+                        color_to_v[v_to_color[v]].remove(v)
                     color_to_v[c].append(v)
+                    color_to_v[c].sort()
                     v_to_color[v] = c
+                    break
             else:
                 print("new color")
                 color_to_v[c] = [v]
                 v_to_color[v] = c
                 break
     print("color_to_v", color_to_v)
-    q = len(color_to_v) - 1
-    ret_v = color_to_v[q][-1]
+    print("v_to_color", v_to_color)
+    cr_num = len(color_to_v)
+    q = cr_num - 1
+    colors = colors[:q + 1]
+#    return cr_num, v_to_color
+    print(f"initial q = {q}")
+    ret_v = np.min(color_to_v[q])
     j_k = q
     while ret_v != vs[0]:
         print("ret_v", ret_v)
         conns = np.array(list(filter(lambda v: v < ret_v, np.nonzero(g[ret_v, :])[0])))
-        rec_v = conns[-1]
+        rec_v = np.max(conns)
         print("conns", conns, "rec_v", rec_v)
         rec_conns = set(np.nonzero(g[ret_v, :])[0])
-        for c in colors[v_to_color[rec_v]+1:]:
+        rec_c = v_to_color[rec_v]
+        for c in colors[rec_c+1:]:
             if len(set(color_to_v[c]).intersection(rec_conns)) == 0:
+                if c == q:
+                    print(f"получен j_k {c} == q {q}")
+                    j_k = q
+                    break
+                print(f"найден j_k = {c}, перекраска x_k ({rec_v}) в него")
                 j_k = c
                 color_to_v[c].append(rec_v)
+                color_to_v[c].sort()
                 color_to_v[v_to_color[rec_v]].remove(rec_v)
                 v_to_color[rec_v] = c
                 break
+        else:
+            j_k = q
         if j_k < q:
+            print("j_k & q", j_k, q)
             for v in vs[rec_v+1:]:
                 if ret_flag:
                     break
@@ -278,19 +298,37 @@ def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
                 for c in colors:
                     if len(set(color_to_v[c]).intersection(conns)) == 0:
                         if c == q:
-                            print("x_k требует ")
+                            j_k = q
+                            print(f"x_i {v} требует q, возврат из нее")
                             ret_v = v
                             ret_flag = True
+                            print("color_to_v", color_to_v)
+                            print("v_to_color", v_to_color)
                             break
+                        print(f"перекраска v {v} в цвет {c}")
                         color_to_v[c].append(v)
+                        color_to_v[c].sort()
                         color_to_v[v_to_color[v]].remove(v)
                         v_to_color[v] = c
-            q = list(color_to_v.keys())[-1]
+                        break
+            for _q in color_to_v.keys():
+                if color_to_v[_q] == []:
+                    q = _q - 1
+                    colors = colors[:q + 1]
+                    break
+            print(f"новый q = {q}")
         else:
-            print("j_k == q или не найден подходящий j_k, ret_v = rec_v (x_k)")
+            print(f"j_k ({j_k}) == q ({q}) или не найден подходящий j_k, ret_v ({ret_v}) = rec_v (x_k = {rec_v})")
+            print("color_to_v", color_to_v)
+            print("v_to_color", v_to_color)
             ret_v = rec_v
             continue
-        print("reached end of loop, ret_v = color_to_v[q][-1]")
-        ret_v = color_to_v[q][-1]
+        if not ret_flag:
+            print("reached end of loop, ret_v = color_to_v[q][-1]")
+            print("color_to_v", color_to_v)
+            print("v_to_color", v_to_color)
+            ret_v = np.min(color_to_v[q])
+        else:
+            ret_flag = False
     print(color_to_v)
-    raise NotImplementedError
+    return q+1, v_to_color

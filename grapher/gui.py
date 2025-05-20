@@ -20,7 +20,8 @@ ALG_NAME_TABLE = {
     "floyd": "Все кратчайшие пути",
     "degrees": "Степени всех вершин",
     "eulerness": "Эйлеровость графа",
-    "connectivity": "Связность графа"
+    "connectivity": "Связность графа",
+    "chromnum": "Раскраска графа"
 }
 
 class MainWindow(QMainWindow):
@@ -296,6 +297,11 @@ class MainWindow(QMainWindow):
                         comp_vs = g.vs.select(comp)
                         comp_vs["color"] = c
                         c += 1
+                case "chromnum":
+                    self.draw_figure_text(f"Хроматическое число графа - {result[1]}")
+                    for v in result[2]:
+                        c_vs = g.vs.select(v)
+                        c_vs["color"] = result[2][v]
                 case _:
                     raise ValueError
         else:
