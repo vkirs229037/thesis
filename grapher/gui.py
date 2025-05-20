@@ -306,8 +306,7 @@ class MainWindow(QMainWindow):
                     raise ValueError
         else:
             title = "Граф"
-        pal = ig.PrecalculatedPalette([utils.random_color() for _ in range(self.graph.n)])
-        print(pal[0])
+        pal = ig.PrecalculatedPalette(utils.gen_palette())
         ig.plot(
             g,
             target=ax,
