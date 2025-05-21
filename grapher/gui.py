@@ -21,7 +21,7 @@ ALG_NAME_TABLE = {
     "degrees": "Степени всех вершин",
     "eulerness": "Эйлеровость графа",
     "connectivity": "Связность графа",
-    "chromnum": "Раскраска графа"
+    "coloring": "Раскраска графа"
 }
 
 class MainWindow(QMainWindow):
@@ -83,19 +83,9 @@ class MainWindow(QMainWindow):
         floyd_action.triggered.connect(lambda checked, arg="floyd": self.insert_alg(checked, arg))
         fleury_action = QAction("Нахождение эйлерового цикла", self)
         fleury_action.triggered.connect(lambda checked, arg="fleury": self.insert_alg(checked, arg))
-        chinese_post_action = QAction("Задача китайского почтальона", self)
-        chinese_post_action.triggered.connect(lambda checked, arg="chinesepostman": self.insert_alg(checked, arg))
-        max_match_action = QAction("Максимальные паросочетания", self)
-        max_match_action.triggered.connect(lambda checked, arg="maxmatching": self.insert_alg(checked, arg))
-        max_indep_action = QAction("Максимальное независимое множество", self)
-        max_indep_action.triggered.connect(lambda checked, arg="maxindepset": self.insert_alg(checked, arg))
-        abs_center_action = QAction("Абсолютный p-центр", self)
-        abs_center_action.triggered.connect(lambda checked, arg="abscenter": self.insert_alg(checked, arg))
-        neg_cycle_action = QAction("Нахождение циклов отрицательного веса", self)
-        neg_cycle_action.triggered.connect(lambda checked, arg="negcycle": self.insert_alg(checked, arg))
-        all_trees_action = QAction("Все деревья графа", self)
-        all_trees_action.triggered.connect(lambda checked, arg="alltrees": self.insert_alg(checked, arg))
-        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, chinese_post_action, max_match_action, max_indep_action, abs_center_action, neg_cycle_action, all_trees_action])
+        coloring_action = QAction("Раскраска графа", self)
+        coloring_action.triggered.connect(lambda checked, arg="coloring": self.insert_alg(checked, arg))
+        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, coloring_action])
 
         propertyMenu = self.actionMenu.addMenu("Свойства графа")
 
@@ -107,9 +97,7 @@ class MainWindow(QMainWindow):
         planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
         euler_action = QAction("Эйлеровость графа", self)
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
-        chrom_num_action = QAction("Хроматическое число графа", self)
-        chrom_num_action.triggered.connect(lambda checked, arg="chromnum": self.insert_alg(checked, arg))
-        propertyMenu.addActions([degrees_action, connected_action, planarity_action, euler_action, chrom_num_action])
+        propertyMenu.addActions([degrees_action, connected_action, planarity_action, euler_action])
 
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
@@ -306,7 +294,7 @@ class MainWindow(QMainWindow):
                         comp_vs = g.vs.select(comp)
                         comp_vs["color"] = c
                         c += 1
-                case "chromnum":
+                case "coloring":
                     self.draw_figure_text(f"Хроматическое число графа - {result[1]}")
                     for v in result[2]:
                         c_vs = g.vs.select(v)
@@ -476,10 +464,6 @@ class AlgWindow(QDialog):
                 layout.addWidget(self.end_vertices)
             case "floyd":
                 pass
-            case "chinesepostman":
-                pass
-            case "maxmatching":
-                pass
             case "fleury":
                 pass
             case "eulerness":
@@ -487,6 +471,8 @@ class AlgWindow(QDialog):
             case "degrees":
                 pass
             case "connectivity": 
+                pass
+            case "coloring":
                 pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
@@ -516,6 +502,8 @@ class AlgWindow(QDialog):
                 self.command = "eulerness;"
             case "connectivity":
                 self.command = "connectivity;"
+            case "coloring":
+                self.command = "coloring;"
             case _:
                 raise ValueError
         self.close()
