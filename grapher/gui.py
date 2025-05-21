@@ -245,13 +245,13 @@ class MainWindow(QMainWindow):
         layout = g.layout("kamada_kawai")
         match self.graph.n:
             case n if n < 10:
-                edge_width = 4
+                edge_width = 2
                 vertex_size = 60
             case n if n < 20:
-                edge_width = 2
+                edge_width = 1
                 vertex_size = 30
             case _:
-                edge_width = 1
+                edge_width = 0.5
                 vertex_size = 10
         g.es["color"] = "black"
         g.vs["color"] = "white"
@@ -309,6 +309,7 @@ class MainWindow(QMainWindow):
             target=ax,
             layout=layout,
             vertex_size=vertex_size,
+            edge_width=edge_width,
             vertex_label=g.vs["name"],
             vertex_label_dist=0,
             edge_label=g.es["weight"],
@@ -349,7 +350,7 @@ class MainWindow(QMainWindow):
                     answer = "Граф не эйлеров"
                 result.append(("text", "Эйлеровость графа", answer))
             case "floyd":
-                v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
+                v_names = [str(v) for v in self.graph.vertices]
                 result.append(("table", "Таблица расстояний", raw[0]))
                 result.append(("table", "Таблица путей", v_names[raw[1]]))
             case "fleury":
@@ -363,13 +364,24 @@ class MainWindow(QMainWindow):
                     answer += "несвязный"
                 answer += f", число компонент связности {raw[1]}"
                 result.append(("text", "Связность", answer))
-                v_names = np.array(list(map(lambda v: v.name, self.graph.vertices)))
+                v_names = [str(v) for v in self.graph.vertices]
                 comps = [v_names[list(c)] for c in raw[0]]
                 comps_str_arr = []
                 for i, comp in enumerate(comps):
                     comps_str_arr.append(f"Компонента {i + 1}: {", ".join(list(comp))}")
                 comps_str = "\n".join(comps_str_arr)
                 result.append(("text", "Компоненты связности", comps_str))
+            case "coloring":
+                answer = ""
+                color_to_v = {i: [] for i in raw[0].values()}
+                for v in self.graph.vertices:
+                    color_to_v[raw[0][v]].append(v)
+                for col in color_to_v:
+                    color_str = f"{col}: "
+                    for v in color_to_v[col]:
+                        color_str += f"{self.graph.vertices[v]} "
+                    answer += color_str + "\n"
+                result.append(("text", "Раскраска графа", answer))
             case _:
                 raise NotImplementedError
         return result
@@ -387,7 +399,7 @@ class MainWindow(QMainWindow):
         filename, _ = QFileDialog.getSaveFileName(self, "Сохранить результаты анализа", "", "Текстовый файл(*.txt);;Все файлы(*)")
         filename = filename.removesuffix(".txt")
         with open(filename + ".txt", "w") as f:
-            v_names = list(map(lambda v: v.name, self.graph.vertices))
+            v_names = [str(v) for v in self.graph.vertices]
             report = []
             for result in self.results:
                 h_r_res = self.human_readable_result(result[0], result[1:])

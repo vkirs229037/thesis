@@ -15,9 +15,7 @@ class Vertex:
     id: int
 
     def __str__(self):
-        if self.label == "":
-            return f"[ID {self.id}] {self.name}" 
-        return f"[ID {self.id}] {self.name}: {self.label}"
+        return self.name
     
     def __hash__(self):
         return self.id
