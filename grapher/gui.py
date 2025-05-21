@@ -372,12 +372,13 @@ class MainWindow(QMainWindow):
                 comps_str = "\n".join(comps_str_arr)
                 result.append(("text", "Компоненты связности", comps_str))
             case "coloring":
+                result.append(("text", "Хроматическое число графа", str(raw[0])))
                 answer = ""
-                color_to_v = {i: [] for i in raw[0].values()}
+                color_to_v = {i: [] for i in raw[1].values()}
                 for v in self.graph.vertices:
-                    color_to_v[raw[0][v]].append(v)
+                    color_to_v[raw[1][v.id]].append(v.id)
                 for col in color_to_v:
-                    color_str = f"{col}: "
+                    color_str = f"{col+1}: "
                     for v in color_to_v[col]:
                         color_str += f"{self.graph.vertices[v]} "
                     answer += color_str + "\n"
