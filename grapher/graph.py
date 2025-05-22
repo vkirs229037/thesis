@@ -27,7 +27,7 @@ class Graph:
         self.vertices = sorted(vertices, key=lambda v: v.id)
         self.edges = vertex_connections
         for pair, weight in self.edges.items():
-            self.incidence_matrix[pair[0], pair[1]] = weight
+            self.incidence_matrix[pair] = weight
             if kind == GraphKind.Undirected:
                 self.incidence_matrix[pair[1], pair[0]] = weight
         if kind == GraphKind.Undirected:
@@ -37,26 +37,6 @@ class Graph:
             self.edges.update(es)
         self.kind = kind
 
-    def to_ig_graph(self):
-        n = len(self.vertices)
-        edges = [(v1.id, v2.id) for v1 in self.vertices for v2 in self.vertices if self.incidence_matrix[v1.id, v2.id] != 0]
-        print(edges)
-        edges_filtered = []
-        for edge in edges:
-            if (edge[1], edge[0]) in edges and self.incidence_matrix[edge[0], edge[1]] == self.incidence_matrix[edge[1], edge[0]]:
-                if edge[0] < edge[1]:
-                    edges_filtered.append(edge)
-            else:
-                edges_filtered.append(edge)
-        print(edges_filtered)
-        g = ig.Graph(n, edges_filtered, directed=True)
-        g.vs["name"] = list(map(lambda v: v.name, self.vertices))
-        g.vs["label"] = list(map(lambda v: v.label, self.vertices))
-        g.es["weight"] = list(map(lambda pair: str(self.incidence_matrix[pair[0], pair[1]]), edges_filtered))
-        print(g.es["weight"])
-        g.es["directed"] = list(map(lambda pair: self.incidence_matrix[pair[0], pair[1]] != self.incidence_matrix[pair[1], pair[0]], edges_filtered))
-        return g
-    
     def to_ig_graph(self):
         match self.kind:
             case GraphKind.Directed:

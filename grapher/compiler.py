@@ -62,7 +62,9 @@ class Lexer:
     
     def take_string(self) -> str:
         result: List[str] = []
-        while (c := self.peek()) is not None and c != "\"": 
+        while (c := self.peek()) != "\"": 
+            if c is None:
+                raise LexError(f"{self.line}:{self.col} Ошибка: ожидалась \", встречен конец файла")
             # здесь self.consume() не будет None
             result.append(self.consume()) # type: ignore
         self.cur -= 1
@@ -124,7 +126,7 @@ class Lexer:
         try:
             _ = int(str_value)
         except ValueError:
-            raise LexError(f"{self.line}:{self.col} Ошибка: неверное десятичное число")
+            raise LexError(f"{self.line}:{self.col} Ошибка: неверно записанное десятичное число")
         return Token(TType.Numlit, "".join(result), self.line, self.col)
 
     def is_numeric(self, c: str):
@@ -384,7 +386,7 @@ class Parser:
 
         t = self.consume()
         if t is None or t.value != "graph":
-            self.report_parse_err(t, "Ожидалась секция определения вершин графа")
+            self.report_parse_err(t, "Ожидалась секция определения соединений графа")
         
         self.parse_conns()
 
