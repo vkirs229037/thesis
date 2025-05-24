@@ -14,7 +14,6 @@ class TType(Enum):
     RBracket = auto()
     Semicolon = auto()
     Colon = auto()
-    Quote = auto()
     String = auto()
     Numlit = auto()
     Eof = auto()
