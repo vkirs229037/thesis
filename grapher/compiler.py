@@ -68,46 +68,37 @@ class Lexer:
                 raise LexError(f"{self.line}:{self.col} Ошибка: ожидалась \", встречен конец файла")
             # здесь self.consume() не будет None
             result.append(self.consume()) # type: ignore
-        self.cur -= 1
         return "".join(result)
-    
-    def set_reading(self) -> Token:
-        self.is_reading_label = not self.is_reading_label
-        return Token(TType.Quote, "\"", self.line, self.col)
-    
+        
     def get_token(self) -> Token:
         token: Token | None = None
         c = self.content[self.cur]
 
-        if self.is_reading_label:
-            if c == "\"":
-                token = self.set_reading()
-            else:
+        match c:
+            case c if c.isalnum():
+                token = self.parse_id()
+            case "#":
+                token = self.parse_numlit()
+            case ";":
+                token = Token(TType.Semicolon, ";", self.line, self.col)
+            case ":":
+                token = Token(TType.Colon, ":", self.line, self.col)
+            case "]":
+                token = Token(TType.RBracket, "]", self.line, self.col)
+            case "[":
+                token = Token(TType.LBracket, "[", self.line, self.col)
+            case "}":
+                token = Token(TType.RBrace, "}", self.line, self.col)
+            case "{":
+                token = Token(TType.LBrace, "{", self.line, self.col)
+            case ">":
+                token = Token(TType.Arrow, ">", self.line, self.col)
+            case "\"":
+                self.cur += 1
+                self.col += 1
                 token = Token(TType.String, self.take_string(), self.line, self.col)
-        else:
-            match c:
-                case c if c.isalnum():
-                    token = self.parse_id()
-                case "#":
-                    token = self.parse_numlit()
-                case ";":
-                    token = Token(TType.Semicolon, ";", self.line, self.col)
-                case ":":
-                    token = Token(TType.Colon, ":", self.line, self.col)
-                case "]":
-                    token = Token(TType.RBracket, "]", self.line, self.col)
-                case "[":
-                    token = Token(TType.LBracket, "[", self.line, self.col)
-                case "}":
-                    token = Token(TType.RBrace, "}", self.line, self.col)
-                case "{":
-                    token = Token(TType.LBrace, "{", self.line, self.col)
-                case ">":
-                    token = Token(TType.Arrow, ">", self.line, self.col)
-                case "\"":
-                    token = self.set_reading()
-                case _:
-                    raise LexError(f"{self.line}:{self.col} Ошибка: неизвестный символ {c}")
+            case _:
+                raise LexError(f"{self.line}:{self.col} Ошибка: неизвестный символ {c}")
         self.cur += 1
         return token
     
@@ -225,14 +216,9 @@ class Parser:
             self.vertices_dict[vertex.name] = vertex.id
             return
         elif tok.type == TType.Colon:
-            quote = self.consume()
-            if quote.type != TType.Quote:
-                self.report_parse_err(quote, "Ожидалась \"")
-            # это всегда String
             label = self.consume()
-            quote = self.consume()
-            if quote.type != TType.Quote:
-                self.report_parse_err(quote, "Ожидалась \"")
+            if label.type != TType.String:
+                self.report_parse_err(label, "Ожидалась строка")
             
             vertex = Vertex(ident.value, label.value, self.last_id())
             self.vertices.append(vertex)
