@@ -207,7 +207,7 @@ class Parser:
             self.report_parse_err(ident, "Зарезервированное имя")
         
         tok = self.consume()
-        if tok is None or tok.type == TType.RBrace:
+        if tok is None or tok.type not in [TType.Colon, TType.Semicolon]:
             self.report_parse_err(tok, "Ожидалось двоеточие или точка с запятой")
         elif tok.type == TType.Semicolon:
             vertex = Vertex(ident.value, "", self.last_id())
@@ -233,7 +233,7 @@ class Parser:
         if t is None or t.type != TType.LBrace:
             self.report_parse_err(t, "Ожидалась {{")
 
-        while (t := self.peek()) is not None and t.type != TType.RBrace:
+        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
             self.parse_vertex_stmt()
 
         t = self.consume()
