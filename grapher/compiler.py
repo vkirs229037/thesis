@@ -473,14 +473,21 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
 
 def from_ig_graph(g: ig.Graph) -> str:
     kind = GraphKind.Directed if g.is_directed() else GraphKind.Undirected
-    verts = g.vs["id"]
+    if "v_id" in g.vs.attributes():
+        verts = g.vs["v_id"]
+    else:
+        verts = g.vs["id"]
     n = len(verts)
+    if "v_label" in g.vs.attributes():
+        labels = g.vs["v_label"]
+    else:
+        labels = ["" for _ in range(n)]
     if "weight" in g.es.attributes():
         weights = g.es["weight"]
     else:
         weights = [1 for _ in range(len(g.es))]
     es = [(e.source, e.target) for e in g.es]
-    vertex_str = [f"{v};" for v in verts]
+    vertex_str = [f"{v};" if l == "" else f"{v}: \"{l}\";" for v, l in zip(verts, labels)]
     graph_str = [f"{verts[s]} > {verts[t]} #{int(w)};" for (s, t), w in zip(es, weights)]
     program = f"""
 vertex {{

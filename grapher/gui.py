@@ -284,7 +284,7 @@ class MainWindow(QMainWindow):
                 case "floyd":
                     self.draw_figure_text("Результат отобразится по нажатию кнопки \"Показать результат\"")
                 case "fleury":
-                    cycle = ", ".join([f"{g.vs["name"][t[0]]} - {g.vs["name"][t[1]]}" for t in result[1]])
+                    cycle = ", ".join([f"{g.vs["id"][t[0]]} - {g.vs["id"][t[1]]}" for t in result[1]])
                     self.draw_figure_text(f"Цикл: {cycle}")
                     cycle_es = g.es.select(_source_in = [t[0] for t in result[1]], _target_in = [t[1] for t in result[1]])
                     cycle_es["color"] = "red"
@@ -494,7 +494,16 @@ class MainWindow(QMainWindow):
         self.clear_images()
 
     def export_to(self, checked, name):
-        pass
+        file_format = "." + name
+        human_name = "GraphML" if name == "graphml" else "DOT"
+        file_name, _ = QFileDialog.getSaveFileName(self, "Экспортировать граф", "", f"Файл графа {human_name}(*{file_format});;Все файлы(*)")
+        if not file_name:
+            return
+        if len(self.results) == 0:
+            ig.Graph.write(self.ig_graphs[0], file_name + file_format, format=name)
+        else:
+            for g, res in zip(self.ig_graphs, self.results):
+                ig.Graph.write(g, file_name + "_" + res[0] + file_format, format=name)
 
 
 class AlgWindow(QDialog):

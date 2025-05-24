@@ -101,7 +101,7 @@ def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
     all_edges = set(g.edges.keys())
     marked = set()
     result = []
-    first_edge = random.choice(all_edges)
+    first_edge = random.choice(list(all_edges))
     marked.add(first_edge)
     result.append(first_edge)
     while marked != all_edges:
