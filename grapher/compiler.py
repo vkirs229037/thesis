@@ -165,6 +165,10 @@ class ParseError(Exception):
     pass
 
 class Parser:
+    RESERVED_IDS = ["directed", "undirected", "vertex", "graph", "visual", "algs", "coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
+    ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
+    PROPS = ["palette", "edgewidth", "arrowsize", "layout", "vertexsize"]
+
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
         self.vertices: List[Vertex] = []
@@ -175,6 +179,7 @@ class Parser:
         self.commands: List[Command] = []
         self.graph_kind: GraphKind = GraphKind.Directed
         self.last_command_line: int = -1
+        self.visual = {}
 
     def report_parse_err(self, token: Token | None, msg: str) -> NoReturn:
         if token is None:
@@ -203,7 +208,7 @@ class Parser:
         if ident is None or ident.type != TType.Id:
             self.report_parse_err(ident, "Ожидался идентификатор вершины")
         
-        if ident.value in ["directed", "undirected", "vertex", "graph", "algs"]:
+        if ident.value in self.RESERVED_IDS:
             self.report_parse_err(ident, "Зарезервированное имя")
         
         tok = self.consume()
@@ -233,7 +238,7 @@ class Parser:
         if t is None or t.type != TType.LBrace:
             self.report_parse_err(t, "Ожидалась {{")
 
-        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
+        while (t := self.peek()) is not None and (t.type != TType.RBrace and t.type != TType.Eof):
             self.parse_vertex_stmt()
 
         t = self.consume()
@@ -263,8 +268,6 @@ class Parser:
             self.report_parse_err(tok, "Ожидался идентификатор или список идентификаторов")
 
         if tok.type == TType.Id:
-            if tok.value in ["directed", "undirected", "vertex", "graph", "algs"]:
-                self.report_parse_err(tok, "Зарезервированное имя")
             try:
                 return [self.vertices_dict[tok.value]]
             except KeyError:
@@ -272,8 +275,6 @@ class Parser:
         elif tok.type == TType.LBracket:
             id_list: List[int] = []
             while (t := self.consume()) is not None and t.type == TType.Id:
-                if t.value in ["directed", "undirected", "vertex", "graph", "algs"]:
-                    self.report_parse_err(t, "Зарезервированное имя")
                 try:
                     id_v = self.vertices_dict[t.value]
                     id_list.append(id_v)
@@ -287,8 +288,6 @@ class Parser:
         ident_main = self.consume()
         if ident_main is None or ident_main.type != TType.Id:
             self.report_parse_err(ident_main, "Ожидался идентификатор вершины")
-        if ident_main.value in ["directed", "undirected", "vertex", "graph", "algs"]:
-            self.report_parse_err(ident_main, "Зарезервированное имя")
 
         id_main = 0
         try:
@@ -320,7 +319,7 @@ class Parser:
 
         self.parse_graph_kind()
         
-        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
+        while (t := self.peek()) is not None and (t.type != TType.RBrace and t.type != TType.Eof):
             self.parse_conn_stmt()
 
         t = self.consume()
@@ -333,8 +332,9 @@ class Parser:
         ident = self.consume()
         if ident is None or ident.type != TType.Id:
             self.report_parse_err(ident, "Ожидалось название алгоритма")
-        if ident.value in ["directed", "undirected", "vertex", "graph", "algs"]:
-            self.report_parse_err(ident, "Зарезервированное имя")
+
+        if ident.value not in self.ALGS:
+            self.report_parse_err(ident, f"Неизвестный алгоритм {ident.value}")
         
         args = []
         while (t := self.peek()) is not None and t.type != TType.Semicolon:
@@ -348,13 +348,56 @@ class Parser:
         self.last_command_line = ident.line
         
     def parse_algs(self):
-        # raise NotImplementedError("Алгоритмы в коде не реализованы")
         t = self.consume()
         if t is None or t.type != TType.LBrace:
             self.report_parse_err(t, "Ожидалась {{")
         
-        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
+        while (t := self.peek()) is not None and (t.type != TType.RBrace and t.type != TType.Eof):
             self.parse_command()
+
+        t = self.consume()
+        if t is None or t.type != TType.RBrace:
+            self.report_parse_err(t, "Ожидалась }}")
+
+    def parse_property(self):
+        prop = self.consume()
+        if prop is None or prop.type != TType.Id:
+            self.report_parse_err(prop, "Ожидалось название свойства")
+        
+        if prop.value not in self.PROPS:
+            self.report_parse_err(prop, "Неизвестное название свойства")
+
+        value = self.consume()
+        match prop.value:
+            case p if p in ["vertexsize", "edgewidth"]:
+                if value.type != TType.Numlit:
+                    self.report_parse_err(value, f"Для свойства {p} ожидалось численное значение")
+            case p if p in ["layout", "palette"]:
+                if value.type != TType.Id:
+                    self.report_parse_err(value, f"Для свойства {p} ожидалось значение в виде идентификатора")
+
+        match prop.value:
+            case "layout":
+                if value.value not in ["star", "circle", "grid", "random", "kamadakawai", "davidsonharel"]:
+                    self.report_parse_err(value, "Неизвестный алгоритм укладки графа")
+            case "palette":
+                if value.value not in ["heat", "random", "grey", "hsv"]:
+                    self.report_parse_err(value, "Неизвестное название палитры")
+
+        tok = self.consume()
+        if tok is None or tok.type != TType.Semicolon:
+            self.report_parse_err(tok, "Ожидалась точка с запятой")
+        
+        self.visual[prop.value] = value.value
+        print(prop.value, value.value, self.visual)
+
+    def parse_visual(self):
+        t = self.consume()
+        if t is None or t.type != TType.LBrace:
+            self.report_parse_err(t, "Ожидалась {{")
+        
+        while (t := self.peek()) is not None and (t.type != TType.RBrace and t.type != TType.Eof):
+            self.parse_property()
 
         t = self.consume()
         if t is None or t.type != TType.RBrace:
@@ -376,14 +419,26 @@ class Parser:
         
         self.parse_conns()
 
-        t = self.consume()
-        if t.type != TType.Eof:
+        t = self.peek()
+        if t is not None and t.type != TType.Eof:
             if t.value == "algs":
+                self.consume()
+                self.parse_algs()
+            elif t.value == "visual":
+                self.consume()
+                self.parse_visual()
+            else:
+                self.report_parse_err(t, f"Неожиданный идентификатор {t.value}, ожидалась секция определения команд или визуальных свойств")
+        
+        t = self.peek()
+        if t is not None and t.type != TType.Eof:
+            if t.value == "algs":
+                self.consume()
                 self.parse_algs()
             else:
-                self.report_parse_err(t, f"Неожиданный идентификатор {t.value}")
+                self.report_parse_err(t, f"Неожиданный идентификатор {t.value}, ожидалась секция определения команд")
 
-def compile(content: str) -> Tuple[Graph, List[Command], int]:
+def compile(content: str) -> Tuple[Graph, List[Command], int, Dict[Token, Token]]:
     lexer = Lexer(content)
     lexer.lex()
     parser = Parser(lexer.tokens)
@@ -393,7 +448,8 @@ def compile(content: str) -> Tuple[Graph, List[Command], int]:
     else:
         lcl = lexer.tokens[-1].line
     # g, commands = Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
-    return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands, parser.last_command_line
+    print(parser.visual)
+    return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands, parser.last_command_line, parser.visual
 
 def report_alg_err(token: Token | None, msg: str) -> NoReturn:
     if token is None:

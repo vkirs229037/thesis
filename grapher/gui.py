@@ -45,6 +45,7 @@ class MainWindow(QMainWindow):
         self.button.clicked.connect(self.plot)
         self.results = []
         self.ig_graphs = []
+        self.visual = {}
 
         self.alg_name = ""
 
@@ -221,7 +222,7 @@ class MainWindow(QMainWindow):
         self.clear_images()
         content = self.editor.toPlainText()
         try:
-            graph, commands, self.last_command_line = compile(content)
+            graph, commands, self.last_command_line, self.visual = compile(content)
         except (LexError, ParseError) as e:
             msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
             msgbox.exec()
@@ -259,17 +260,27 @@ class MainWindow(QMainWindow):
         self.figures.append(f)
         self.cur_img += 1
         ax = self.figures[self.cur_img].add_subplot()
-        layout = g.layout("kamada_kawai")
-        match self.graph.n:
-            case n if n < 10:
-                edge_width = 2
-                vertex_size = 60
-            case n if n < 20:
-                edge_width = 1
-                vertex_size = 30
-            case _:
-                edge_width = 0.5
-                vertex_size = 10
+        if (layout_id := self.visual.get("layout")) is None:
+            layout_id = "kamada_kawai"
+        if layout_id == "kamadakawai": layout_id = "kamada_kawai"
+        if layout_id == "davidsonharel": layout_id = "davidson_harel"
+        layout = g.layout(layout_id)
+        if (edge_width := self.visual.get("edgewidth")) is None:
+            match self.graph.n:
+                case n if n < 10:
+                    edge_width = 2
+                case n if n < 20:
+                    edge_width = 1
+                case _:
+                    edge_width = 0.5
+        if (vertex_size := self.visual.get("vertexsize")) is None:
+            match self.graph.n:
+                case n if n < 10:
+                    vertex_size = 60
+                case n if n < 20:
+                    vertex_size = 30
+                case _:
+                    vertex_size = 10
         g.es["color"] = "black"
         g.vs["color"] = "white"
         if result is not None:
