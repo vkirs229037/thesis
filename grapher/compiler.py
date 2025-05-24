@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import List, Dict, Tuple, Any, NoReturn
 from graph import Graph, Vertex, GraphKind
+import igraph as ig
 import algs
 
 class TType(Enum):
@@ -469,3 +470,26 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             raise ValueError("Неизвестное название алгоритма")
     result.insert(0, com.func_name.value)
     return tuple(result)
+
+def from_ig_graph(g: ig.Graph) -> str:
+    kind = GraphKind.Directed if g.is_directed() else GraphKind.Undirected
+    verts = g.vs["id"]
+    n = len(verts)
+    if "weight" in g.es.attributes():
+        weights = g.es["weight"]
+    else:
+        weights = [1 for _ in range(len(g.es))]
+    es = [(e.source, e.target) for e in g.es]
+    vertex_str = [f"{v};" for v in verts]
+    graph_str = [f"{verts[s]} > {verts[t]} #{int(w)};" for (s, t), w in zip(es, weights)]
+    program = f"""
+vertex {{
+{"\n".join(vertex_str)}
+}}
+
+graph {{
+{"directed" if kind == GraphKind.Directed else "undirected"};
+{"\n".join(graph_str)}
+}}
+"""
+    return program

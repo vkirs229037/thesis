@@ -41,7 +41,7 @@ class Graph:
         match self.kind:
             case GraphKind.Directed:
                 g = ig.Graph(self.n, self.edges, directed=True)
-                g.vs["name"] = list(map(lambda v: v.name, self.vertices))
+                g.vs["id"] = list(map(lambda v: v.name, self.vertices))
                 g.vs["label"] = list(map(lambda v: v.label, self.vertices))
                 g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
                 return g
@@ -54,7 +54,7 @@ class Graph:
                     else:
                         es.append(edge)
                 g = ig.Graph(self.n, es, directed=False)
-                g.vs["name"] = list(map(lambda v: v.name, self.vertices))
+                g.vs["id"] = list(map(lambda v: v.name, self.vertices))
                 g.vs["label"] = list(map(lambda v: v.label, self.vertices))
                 g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
                 return g

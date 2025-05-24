@@ -6,7 +6,7 @@ import igraph as ig
 from PyQt6.QtCore import QSize, QAbstractTableModel, Qt
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView, QHeaderView
 from PyQt6.QtGui import QAction, QKeySequence, QTextCursor
-from compiler import compile, ParseError, LexError, exec_alg
+from compiler import compile, ParseError, LexError, exec_alg, from_ig_graph
 from graph import Graph
 import os
 from typing import Tuple, Any
@@ -44,6 +44,7 @@ class MainWindow(QMainWindow):
         self.editor.textChanged.connect(self.change_dirty)
         self.button.clicked.connect(self.plot)
         self.results = []
+        self.ig_graphs = []
 
         self.alg_name = ""
 
@@ -59,7 +60,7 @@ class MainWindow(QMainWindow):
         save_action.triggered.connect(self.save_graph)
         save_action.setShortcut(QKeySequence("Ctrl+s"))
         self.export_action = QAction("Экспорт изображения", self)
-        self.export_action.triggered.connect(self.export_graph)
+        self.export_action.triggered.connect(self.export_image)
         self.export_action.setShortcut(QKeySequence("Ctrl+e"))
         self.save_result_action = QAction("Сохранить результаты анализа", self)
         self.save_result_action.triggered.connect(self.save_results)
@@ -104,10 +105,8 @@ class MainWindow(QMainWindow):
         import_menu = self.ie_menu.addMenu("Ммпорт")
 
         from_graphml = QAction("GraphML...", self)
-        from_graphml.triggered.connect(lambda checked, arg="graphml": self.import_from(checked, arg))
-        from_dot = QAction("DOT...", self)
-        from_dot.triggered.connect(lambda checked, arg="dot": self.import_from(checked, arg))
-        import_menu.addActions([from_graphml, from_dot])
+        from_graphml.triggered.connect(self.import_from)
+        import_menu.addAction(from_graphml)
 
         export_menu = self.ie_menu.addMenu("Экспорт")
         to_graphml = QAction("GraphML...", self)
@@ -156,6 +155,7 @@ class MainWindow(QMainWindow):
         self.canvases = []
         self.toolbars = []
         self.results = []
+        self.ig_graphs = []
         self.graph_images.clear()
         self.cur_img = -1
         self.toggle_menu(False)
@@ -327,13 +327,14 @@ class MainWindow(QMainWindow):
             layout=layout,
             vertex_size=vertex_size,
             edge_width=edge_width,
-            vertex_label=g.vs["name"],
+            vertex_label=g.vs["id"],
             vertex_label_dist=0,
             edge_label=g.es["weight"],
             vertex_color=g.vs["color"],
             edge_color=g.es["color"],
             palette = pal
         )
+        self.ig_graphs.append(g)
         for i, dot in enumerate(layout.coords):
             self.draw_ax_text(ax, g.vs["label"][i], dot[0], dot[1] - vertex_size*0.005)
         canvas = FigureCanvas(self.figures[self.cur_img])
@@ -405,6 +406,10 @@ class MainWindow(QMainWindow):
         return result
 
     def show_current_result(self):
+        if len(self.results) == 0:
+            msgbox = QMessageBox(QMessageBox.Icon.Warning, "Ошибка", "Нет результатов для отображения", QMessageBox.StandardButton.Ok)
+            msgbox.exec()
+            return
         raw_result = self.results[self.cur_img]
         title = raw_result[0]
         result = []
@@ -456,7 +461,7 @@ class MainWindow(QMainWindow):
             self.editor.insertPlainText(f"\nalgs {{\n {command}\n}}")
             self.last_command_line += 2
 
-    def export_graph(self):
+    def export_image(self):
         file_name, file_ext = QFileDialog.getSaveFileName(self, "Экспортировать граф", "", "Изображение PNG(*.png);;Векторное изображение SVG(*.svg);;Все файлы(*)")
         if not file_name:
             return
@@ -469,6 +474,27 @@ class MainWindow(QMainWindow):
         else:
             for fig, res in zip(self.figures, self.results):
                 fig.savefig(file_name + "_" + res[0] + file_ext)
+
+    def import_from(self):
+        if not self.confirm_save():
+            return
+        file_name, _ = QFileDialog.getOpenFileName(self, "Загрузить граф GraphML", "", "Файл графа GraphML(*.graphml);;Все файлы(*)")
+        if not file_name:
+            return
+        try:
+            ig_graph = ig.Graph.Read_GraphML(file_name)
+            code = from_ig_graph(ig_graph)
+        except Exception as e:
+            msgbox = QMessageBox(QMessageBox.Icon.Critical, "Ошибка", f"{e}", QMessageBox.StandardButton.Ok)
+            msgbox.exec()
+            return
+        self.editor.setPlainText(code)
+        self.setWindowTitle("Grapher - Новый граф")
+        self.dirty = False
+        self.clear_images()
+
+    def export_to(self, checked, name):
+        pass
 
 
 class AlgWindow(QDialog):
