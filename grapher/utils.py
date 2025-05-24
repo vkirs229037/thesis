@@ -1,6 +1,5 @@
 import numpy as np
 from matplotlib import colors
-import itertools
 
 def gen_palette(pal_name, n):
     match pal_name:
@@ -22,11 +21,11 @@ def gen_palette(pal_name, n):
         case "random":
             hues = np.random.rand(n)
             sats = np.random.rand(n)
-            vals = np.random.rand(n)
+            vals = 0.5 * np.random.random_sample(n) + 0.5
         case _:
             raise ValueError
-    cols = map(lambda t: colors.hsv_to_rgb(t), zip(hues, sats, vals))
-    return list(cols)
+    cols = colors.hsv_to_rgb(zip(hues, sats, vals))
+    return cols
 
 def gen_random_graph(n):
     s = "vertex {\n"

@@ -43,7 +43,7 @@ class Graph:
                 g = ig.Graph(self.n, self.edges, directed=True)
                 g.vs["id"] = list(map(lambda v: v.name, self.vertices))
                 g.vs["label"] = list(map(lambda v: v.label, self.vertices))
-                g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
+                g.es["weight"] = list(self.edges.values())
                 return g
             case GraphKind.Undirected:
                 es = []
@@ -56,7 +56,7 @@ class Graph:
                 g = ig.Graph(self.n, es, directed=False)
                 g.vs["id"] = list(map(lambda v: v.name, self.vertices))
                 g.vs["label"] = list(map(lambda v: v.label, self.vertices))
-                g.es["weight"] = list(map(lambda w: str(w), self.edges.values()))
+                g.es["weight"] = list(self.edges.values())
                 return g
 
     def print(self):

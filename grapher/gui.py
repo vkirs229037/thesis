@@ -261,10 +261,14 @@ class MainWindow(QMainWindow):
         self.cur_img += 1
         ax = self.figures[self.cur_img].add_subplot()
         if (layout_id := self.visual.get("layout")) is None:
-            layout_id = "kamada_kawai"
+            layout_id = "circle"
         if layout_id == "kamadakawai": layout_id = "kamada_kawai"
         if layout_id == "davidsonharel": layout_id = "davidson_harel"
-        layout = g.layout(layout_id)
+        if layout_id == "kamada_kawai":
+            print(g.es["weight"])
+            layout = g.layout(layout_id, weights=g.es["weight"])
+        else:
+            layout = g.layout(layout_id)
         if (edge_width := self.visual.get("edgewidth")) is None:
             match self.graph.n:
                 case n if n < 10:
@@ -290,9 +294,10 @@ class MainWindow(QMainWindow):
                 case "dijkstra":
                     self.draw_figure_text(f"Длина кратчайшего пути: {result[1]}")
                     path_vs = g.vs.select(result[2])
-                    path_es = g.es.select(_source_in = path_vs[:-1], _target_in = path_vs[1:])
+                    for i in range(len(path_vs) - 1):
+                        e = g.get_eid(path_vs[i], path_vs[i + 1])
+                        g.es[e]["color"] = "red"
                     path_vs["color"] = "red"
-                    path_es["color"] = "red"
                 case "floyd":
                     self.draw_figure_text("Результат отобразится по нажатию кнопки \"Показать результат\"")
                 case "fleury":
@@ -316,6 +321,7 @@ class MainWindow(QMainWindow):
                     else:
                         answer += "несвязный"
                     answer += f", число компонент связности {result[2]}"
+                    palette_n = result[2]
                     self.draw_figure_text(answer)
                     c = 0
                     for comp in result[1]:

@@ -367,28 +367,32 @@ class Parser:
         if prop.value not in self.PROPS:
             self.report_parse_err(prop, "Неизвестное название свойства")
 
-        value = self.consume()
+        value_tok = self.consume()
         match prop.value:
             case p if p in ["vertexsize", "edgewidth"]:
-                if value.type != TType.Numlit:
-                    self.report_parse_err(value, f"Для свойства {p} ожидалось численное значение")
+                if value_tok.type != TType.Numlit:
+                    self.report_parse_err(value_tok, f"Для свойства {p} ожидалось численное значение")
+                else:
+                    value = int(value_tok.value)
             case p if p in ["layout", "palette"]:
-                if value.type != TType.Id:
-                    self.report_parse_err(value, f"Для свойства {p} ожидалось значение в виде идентификатора")
+                if value_tok.type != TType.Id:
+                    self.report_parse_err(value_tok, f"Для свойства {p} ожидалось значение в виде идентификатора")
+                else:
+                    value = value_tok.value
 
         match prop.value:
             case "layout":
-                if value.value not in ["star", "circle", "grid", "random", "kamadakawai", "davidsonharel"]:
-                    self.report_parse_err(value, "Неизвестный алгоритм укладки графа")
+                if value_tok.value not in ["star", "circle", "grid", "random", "kamadakawai", "davidsonharel"]:
+                    self.report_parse_err(value_tok, "Неизвестный алгоритм укладки графа")
             case "palette":
-                if value.value not in ["heat", "random", "grey"]:
-                    self.report_parse_err(value, "Неизвестное название палитры")
+                if value_tok.value not in ["heat", "random", "grey"]:
+                    self.report_parse_err(value_tok, "Неизвестное название палитры")
 
         tok = self.consume()
         if tok is None or tok.type != TType.Semicolon:
             self.report_parse_err(tok, "Ожидалась точка с запятой")
         
-        self.visual[prop.value] = value.value
+        self.visual[prop.value] = value
 
     def parse_visual(self):
         t = self.consume()
