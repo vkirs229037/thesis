@@ -167,7 +167,7 @@ class ParseError(Exception):
 class Parser:
     RESERVED_IDS = ["directed", "undirected", "vertex", "graph", "visual", "algs", "coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
     ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
-    PROPS = ["palette", "edgewidth", "arrowsize", "layout", "vertexsize"]
+    PROPS = ["palette", "edgewidth", "layout", "vertexsize"]
 
     def __init__(self, tokens: List[Token]):
         self.tokens = tokens
@@ -381,7 +381,7 @@ class Parser:
                 if value.value not in ["star", "circle", "grid", "random", "kamadakawai", "davidsonharel"]:
                     self.report_parse_err(value, "Неизвестный алгоритм укладки графа")
             case "palette":
-                if value.value not in ["heat", "random", "grey", "hsv"]:
+                if value.value not in ["heat", "random", "grey"]:
                     self.report_parse_err(value, "Неизвестное название палитры")
 
         tok = self.consume()
@@ -389,7 +389,6 @@ class Parser:
             self.report_parse_err(tok, "Ожидалась точка с запятой")
         
         self.visual[prop.value] = value.value
-        print(prop.value, value.value, self.visual)
 
     def parse_visual(self):
         t = self.consume()
@@ -448,7 +447,6 @@ def compile(content: str) -> Tuple[Graph, List[Command], int, Dict[Token, Token]
     else:
         lcl = lexer.tokens[-1].line
     # g, commands = Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands
-    print(parser.visual)
     return Graph(parser.vertices, parser.vertex_connections, parser.graph_kind), parser.commands, parser.last_command_line, parser.visual
 
 def report_alg_err(token: Token | None, msg: str) -> NoReturn:

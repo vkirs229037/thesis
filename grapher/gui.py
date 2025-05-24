@@ -281,8 +281,9 @@ class MainWindow(QMainWindow):
                     vertex_size = 30
                 case _:
                     vertex_size = 10
+        g.vs["color"] = [v.id for v in self.graph.vertices]
         g.es["color"] = "black"
-        g.vs["color"] = "white"
+        palette_n = self.graph.n
         if result is not None:
             title = ALG_NAME_TABLE[result[0]]
             match result[0]:
@@ -318,12 +319,12 @@ class MainWindow(QMainWindow):
                     self.draw_figure_text(answer)
                     c = 0
                     for comp in result[1]:
-                        print(comp)
                         comp_vs = g.vs.select(comp)
                         comp_vs["color"] = c
                         c += 1
                 case "coloring":
                     self.draw_figure_text(f"Хроматическое число графа - {result[1]}")
+                    palette_n = result[1]
                     for v in result[2]:
                         c_vs = g.vs.select(v)
                         c_vs["color"] = result[2][v]
@@ -331,7 +332,9 @@ class MainWindow(QMainWindow):
                     raise ValueError
         else:
             title = "Граф"
-        pal = ig.PrecalculatedPalette(utils.gen_palette())
+        if (pal_id := self.visual.get("palette")) is None:
+            pal_id = "grey"
+        pal = ig.PrecalculatedPalette(utils.gen_palette(pal_id, palette_n))
         ig.plot(
             g,
             target=ax,
