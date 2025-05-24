@@ -459,7 +459,7 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
                 report_alg_err(com.func_name, "Граф должен быть связным")
             if g.kind != GraphKind.Undirected:
                 report_alg_err(com.func_name, "Граф должен быть неориентированным")
-            q, d = algs.chrom_num(g)
+            q, d = algs.coloring(g)
             result += [q, d]
         case "connectivity":
             comps = algs.conn_comps(g)

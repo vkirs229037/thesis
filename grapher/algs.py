@@ -66,7 +66,7 @@ def dijkstra(g: Graph, s: int, t: int) -> Tuple[int, List[int]]:
 # Алгоритм Флойда
 def floyd(g: Graph) -> Tuple[np.ndarray, np.ndarray] | bool:
     c = copy.deepcopy(g[:, :])
-    vs = np.array(list(map(lambda v: v.id, g.vertices)))
+    vs = np.array([v.id for v in g.vertices])
     theta = np.repeat(vs.reshape(-1, 1), g.n, axis=1)
     c[c == 0] = np.iinfo(np.int32).max
     k = 0
@@ -98,17 +98,17 @@ def fleury(g: Graph) -> List[Tuple[int, int]]:
         return fleury_undirected(g)
 
 def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
-    all_edges = list(g.edges.keys())
-    marked = {}
+    all_edges = set(g.edges.keys())
+    marked = set()
     result = []
     first_edge = random.choice(all_edges)
-    marked[first_edge] = True
+    marked.add(first_edge)
     result.append(first_edge)
-    while set(marked.keys()) != set(all_edges):
+    while marked != all_edges:
         e = result[-1]
         v = e[1]
         conns = np.nonzero(g[v, :])[0]
-        edges = set([(v, w) for w in conns if marked.get((v, w)) != True])
+        edges = set([(v, w) for w in conns if (v, w) not in marked])
         bridges = set()
         for w in conns:
             if v == w:
@@ -117,33 +117,33 @@ def fleury_directed(g: Graph) -> List[Tuple[int, int]]:
             del g.edges[(v, w)]
             g[v, w] = 0
             r_m = reachability_matrix(g)
-            if r_m[v, w] == 0:
+            if r_m[v, w] == 0 or r_m[w, v] == 0:
                 # Нашли мост
                 bridges.add((v, w))
             g.edges[(v, w)] = c
             g[v, w] = c
         non_bridges = edges - bridges
         if len(non_bridges) == 0:
-            result.append(list(bridges)[0])
-            marked[list(bridges)[0]] = True
+            new_e = list(bridges)[0]
         else:
-            result.append(list(non_bridges)[0])
-            marked[list(non_bridges)[0]] = True
+            new_e = list(non_bridges)[0]
+        result.append(new_e)
+        marked.add(new_e)
     return result
 
 def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
-    all_edges = list(g.edges.keys())
-    marked = {}
+    all_edges = set(g.edges.keys())
+    marked = set()
     result = []
     first_edge = random.choice(all_edges)
-    marked[first_edge] = True
-    marked[(first_edge[1], first_edge[0])] = True
+    marked.add(first_edge)
+    marked.add((first_edge[1], first_edge[0]))
     result.append(first_edge)
-    while set(marked.keys()) != set(all_edges):
+    while marked != all_edges:
         e = result[-1]
         v = e[1]
         conns = np.nonzero(g[v, :])[0]
-        edges = set([(v, w) for w in conns if marked.get((v, w)) != True or marked.get((w, v)) != True])
+        edges = set([(v, w) for w in conns if (v, w) not in marked or (w, v) not in marked])
         bridges = set()
         for w in conns:
             if v == w:
@@ -163,8 +163,8 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
         else:
             new_e = list(non_bridges)[0]
         result.append(new_e)
-        marked[new_e] = True
-        marked[new_e[1], new_e[0]] = True
+        marked.add(new_e)
+        marked.add((new_e[1], new_e[0]))
     return result
 
 
@@ -173,10 +173,9 @@ def chinesepostman(g: Graph) -> List[int]:
     raise NotImplementedError
 
 # Общий обход графа с запоминанием вершин
-def walk(g: Graph, p0: int) -> List[int]:
+def walk(g: Graph, p0: int) -> Set[int]:
     r_m = reachability_matrix(g)
     visited = set([p0])
-    path = [p0]
     S = [p0]
     while len(S) > 0:
         q = S.pop()
@@ -185,8 +184,7 @@ def walk(g: Graph, p0: int) -> List[int]:
             if p not in visited:
                 visited.add(p)
                 S.append(p)
-                path.append(p)
-    return path
+    return visited
 
 # Нахождение компонент связности
 def conn_comps(g: Graph) -> List[Set[int]]:
@@ -195,9 +193,9 @@ def conn_comps(g: Graph) -> List[Set[int]]:
     for v in [v.id for v in g.vertices]:
         if v in visited:
             continue
-        path = walk(g, v)
-        visited.update(path)
-        comps.append(set(path))    
+        current_visited = walk(g, v)
+        visited.update(current_visited)
+        comps.append(set(current_visited))
     return comps
 
 ### 
@@ -208,13 +206,13 @@ def conn_comps(g: Graph) -> List[Set[int]]:
 def is_euler(g: Graph) -> bool:
     if g.kind == GraphKind.Directed:
         for v in g.vertices:
-            degree_in = np.sum(np.where(g[v.id, :] != 0, 1, 0))
-            degree_out = np.sum(np.where(g[:, v.id] != 0, 1, 0))
+            degree_in = np.count_nonzero(g[v.id, :])
+            degree_out = np.count_nonzero(g[:, v.id])
             if degree_in != degree_out:
                 return False
     else:
         for v in g.vertices:
-            degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+            degree = np.count_nonzero(g[v.id, :])
             if degree % 2 != 0:
                 return False
     return True
@@ -223,14 +221,14 @@ def is_euler(g: Graph) -> bool:
 def degrees(g: Graph) -> list[int]:
     result = []
     for v in g.vertices:
-        degree = np.sum(np.where(g[v.id, :] != 0, 1, 0))
+        degree = np.count_nonzero(g[v.id, :])
         if g.kind == GraphKind.Directed:
-            degree += np.sum(np.where(g[:, v.id] != 0, 1, 0))
+            degree += np.count_nonzero(g[:, v.id])
         result.append(degree)
     return result
 
 # Определение хроматического числа и раскраска графа
-def chrom_num(g: Graph) -> Tuple[int, Dict[int, int]]:
+def coloring(g: Graph) -> Tuple[int, Dict[int, int]]:
     # Первоначальная раскраска
     colors = [v.id for v in g.vertices]
     vs = [v.id for v in g.vertices]

@@ -23,13 +23,13 @@ class Vertex:
 class Graph:
     def __init__(self, vertices: List[Vertex], vertex_connections: Dict[Tuple[int, int], int], kind: GraphKind):
         self.n = len(vertices)
-        self.incidence_matrix = np.zeros((self.n, self.n), dtype=np.dtype(int))
+        self.adj_matrix = np.zeros((self.n, self.n), dtype=np.dtype(int))
         self.vertices = sorted(vertices, key=lambda v: v.id)
         self.edges = vertex_connections
         for pair, weight in self.edges.items():
-            self.incidence_matrix[pair] = weight
+            self.adj_matrix[pair] = weight
             if kind == GraphKind.Undirected:
-                self.incidence_matrix[pair[1], pair[0]] = weight
+                self.adj_matrix[pair[1], pair[0]] = weight
         if kind == GraphKind.Undirected:
             es = {}
             for kvp in self.edges.items():
@@ -48,7 +48,7 @@ class Graph:
             case GraphKind.Undirected:
                 es = []
                 for edge in self.edges:
-                    if (edge[1], edge[0]) in self.edges and self.incidence_matrix[edge[0], edge[1]] == self.incidence_matrix[edge[1], edge[0]]:
+                    if (edge[1], edge[0]) in self.edges and self.adj_matrix[edge[0], edge[1]] == self.adj_matrix[edge[1], edge[0]]:
                         if edge[0] < edge[1]:
                             es.append(edge)
                     else:
@@ -68,15 +68,15 @@ class Graph:
         for v in self.vertices:
             print(v_format.format(v.name), end=" ")
         print("\n", end="")
-        n = self.incidence_matrix.shape[0]
+        n = self.adj_matrix.shape[0]
         for i in range(0, n):
             print(v_format.format(self.vertices[i].name), end=" ")
             for j in range(0, n):
-                print(v_format.format(self.incidence_matrix[i, j]), end=" ")
+                print(v_format.format(self.adj_matrix[i, j]), end=" ")
             print("\n", end="")
 
     def __getitem__(self, tup):
-        return self.incidence_matrix[tup]
+        return self.adj_matrix[tup]
     
     def __setitem__(self, tup, val):
-        self.incidence_matrix[tup] = val
+        self.adj_matrix[tup] = val

@@ -99,6 +99,23 @@ class MainWindow(QMainWindow):
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
         propertyMenu.addActions([degrees_action, connected_action, planarity_action, euler_action])
 
+        self.ie_menu = menu.addMenu("Импорт и экспорт")
+
+        import_menu = self.ie_menu.addMenu("Ммпорт")
+
+        from_graphml = QAction("GraphML...", self)
+        from_graphml.triggered.connect(lambda checked, arg="graphml": self.import_from(checked, arg))
+        from_dot = QAction("DOT...", self)
+        from_dot.triggered.connect(lambda checked, arg="dot": self.import_from(checked, arg))
+        import_menu.addActions([from_graphml, from_dot])
+
+        export_menu = self.ie_menu.addMenu("Экспорт")
+        to_graphml = QAction("GraphML...", self)
+        to_graphml.triggered.connect(lambda checked, arg="graphml": self.export_to(checked, arg))
+        to_dot = QAction("DOT...", self)
+        to_dot.triggered.connect(lambda checked, arg="dot": self.export_to(checked, arg))
+        export_menu.addActions([to_graphml, to_dot])
+
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
         graph_editor = QWidget()
@@ -364,7 +381,7 @@ class MainWindow(QMainWindow):
                     answer += "несвязный"
                 answer += f", число компонент связности {raw[1]}"
                 result.append(("text", "Связность", answer))
-                v_names = [str(v) for v in self.graph.vertices]
+                v_names = np.array([str(v) for v in self.graph.vertices])
                 comps = [v_names[list(c)] for c in raw[0]]
                 comps_str_arr = []
                 for i, comp in enumerate(comps):
@@ -378,7 +395,7 @@ class MainWindow(QMainWindow):
                 for v in self.graph.vertices:
                     color_to_v[raw[1][v.id]].append(v.id)
                 for col in color_to_v:
-                    color_str = f"{col+1}: "
+                    color_str = f"Цвет {col+1}: "
                     for v in color_to_v[col]:
                         color_str += f"{self.graph.vertices[v]} "
                     answer += color_str + "\n"
@@ -448,7 +465,7 @@ class MainWindow(QMainWindow):
         else:
             file_ext = ""
         if len(self.results) == 0:
-            self.figure[0].savefig(file_name + file_ext)
+            self.figures[0].savefig(file_name + file_ext)
         else:
             for fig, res in zip(self.figures, self.results):
                 fig.savefig(file_name + "_" + res[0] + file_ext)
