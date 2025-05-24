@@ -186,9 +186,9 @@ class Parser:
         self.LAST_ID += 1
         return self.LAST_ID
     
-    def peek(self, forward: int = 0) -> Token | None:
-        if self.cur + forward < len(self.tokens):
-            return self.tokens[self.cur + forward]
+    def peek(self) -> Token | None:
+        if self.cur < len(self.tokens):
+            return self.tokens[self.cur]
         return None
     
     def consume(self) -> Token | None:
