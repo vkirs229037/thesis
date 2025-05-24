@@ -320,7 +320,7 @@ class Parser:
 
         self.parse_graph_kind()
         
-        while (t := self.peek()) is not None and t.type != TType.RBrace:
+        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
             self.parse_conn_stmt()
 
         t = self.consume()
@@ -353,7 +353,7 @@ class Parser:
         if t is None or t.type != TType.LBrace:
             self.report_parse_err(t, "Ожидалась {{")
         
-        while (t := self.peek()) is not None and t.type != TType.RBrace:
+        while (t := self.peek()) is not None and (t.type != TType.RBrace or t.type != TType.Eof):
             self.parse_command()
 
         t = self.consume()
