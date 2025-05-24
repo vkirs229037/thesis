@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
 
         self.ie_menu = menu.addMenu("Импорт и экспорт")
 
-        import_menu = self.ie_menu.addMenu("Ммпорт")
+        import_menu = self.ie_menu.addMenu("Импорт")
 
         from_graphml = QAction("GraphML...", self)
         from_graphml.triggered.connect(self.import_from)
