@@ -135,7 +135,7 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
     all_edges = set(g.edges.keys())
     marked = set()
     result = []
-    first_edge = random.choice(all_edges)
+    first_edge = random.choice(list(all_edges))
     marked.add(first_edge)
     marked.add((first_edge[1], first_edge[0]))
     result.append(first_edge)
@@ -176,6 +176,7 @@ def chinesepostman(g: Graph) -> List[int]:
 def walk(g: Graph, p0: int) -> Set[int]:
     r_m = reachability_matrix(g)
     visited = set([p0])
+    P = [p0]
     S = [p0]
     while len(S) > 0:
         q = S.pop()
@@ -184,6 +185,8 @@ def walk(g: Graph, p0: int) -> Set[int]:
             if p not in visited:
                 visited.add(p)
                 S.append(p)
+                P.append(p)
+    print(P)
     return visited
 
 # Нахождение компонент связности

@@ -24,7 +24,7 @@ def gen_palette(pal_name, n):
             vals = 0.5 * np.random.random_sample(n) + 0.5
         case _:
             raise ValueError
-    cols = colors.hsv_to_rgb(zip(hues, sats, vals))
+    cols = colors.hsv_to_rgb(list(zip(hues, sats, vals)))
     return cols
 
 def gen_random_graph(n):
