@@ -22,7 +22,8 @@ ALG_NAME_TABLE = {
     "eulerness": "Эйлеровость графа",
     "connectivity": "Связность графа",
     "coloring": "Раскраска графа",
-    "strongcomps": "Сильные компоненты графа"
+    "strongcomps": "Сильные компоненты графа",
+    "acyclic": "Ацикличность графа"
 }
 
 class MainWindow(QMainWindow):
@@ -100,7 +101,9 @@ class MainWindow(QMainWindow):
         connected_action.triggered.connect(lambda checked, arg="connectivity": self.insert_alg(checked, arg))
         euler_action = QAction("Эйлеровость графа", self)
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
-        propertyMenu.addActions([degrees_action, connected_action, euler_action])
+        acyclic_action = QAction("Ацикличность графа", self)
+        acyclic_action.triggered.connect(lambda checked, arg="acyclic": self.insert_alg(checked, arg))
+        propertyMenu.addActions([degrees_action, connected_action, euler_action, acyclic_action])
 
         self.ie_menu = menu.addMenu("Импорт и экспорт")
 
@@ -310,8 +313,10 @@ class MainWindow(QMainWindow):
                 case "fleury":
                     cycle = ", ".join([f"{g.vs["id"][t[0]]} - {g.vs["id"][t[1]]}" for t in result[1]])
                     self.draw_figure_text(f"Цикл: {cycle}")
-                    cycle_es = g.es.select(_source_in = [t[0] for t in result[1]], _target_in = [t[1] for t in result[1]])
-                    cycle_es["color"] = "red"
+                    for t in result[1]:
+                        print(t)
+                        cycle_e = g.get_eid(*t)
+                        g.es[cycle_e]["color"] = "red"
                 case "degrees":
                     for i, dot in enumerate(layout.coords):
                         self.draw_ax_text(ax, result[1][i], dot[0], dot[1] + vertex_size*0.003, "r")
@@ -349,6 +354,17 @@ class MainWindow(QMainWindow):
                         comp_vs = g.vs.select(comp)
                         comp_vs["color"] = c
                         c += 1
+                case "acyclic":
+                    if result[1] == False:
+                        self.draw_figure_text(f"Граф ациклический")
+                    else:
+                        self.draw_figure_text(f"Граф имеет цикл")
+                        cycle_vs = g.vs.select(result[1])
+                        print([v for v in cycle_vs])
+                        for i in range(len(cycle_vs) - 1):
+                            e = g.get_eid(cycle_vs[i], cycle_vs[i + 1])
+                            g.es[e]["color"] = "red"
+                        cycle_vs["color"] = "red"
                 case _:
                     raise ValueError
         else:
@@ -440,6 +456,12 @@ class MainWindow(QMainWindow):
                 result.append(("text", "Число сильных компонент", raw[1]))
                 for i, comp in enumerate(comps):
                     comps_str_arr.append(f"Компонента {i + 1}: {", ".join(list(comp))}")
+            case "acyclic":
+                answer = "Граф ациклический" if not raw[0] else "Граф имеет цикл"
+                result.append(("text", "Ацикличность графа", answer))
+                if raw[0] != False:
+                    cycle = cycle = ", ".join([f"{self.graph.vertices[i].name}" for i in raw[0]])
+                    result.append(("text", "Цикл", cycle))
             case _:
                 raise NotImplementedError
         return result
@@ -566,7 +588,7 @@ class AlgWindow(QDialog):
                 layout.addWidget(self.start_vertices)
                 layout.addWidget(end_label)
                 layout.addWidget(self.end_vertices)
-            case alg if alg in ["floyd", "fleury", "eulerness", "degrees", "connectivity", "coloring", "strongcomps"]:
+            case alg if alg in ["floyd", "fleury", "eulerness", "degrees", "connectivity", "coloring", "strongcomps", "acyclic"]:
                 pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
@@ -587,7 +609,7 @@ class AlgWindow(QDialog):
                 command.append(self.graph.vertices[t].name)
                 self.command = " ".join(command) + ";"
             case alg:
-                self.command = self.alg_name + ";"
+                self.command = alg + ";"
         self.close()
 
 

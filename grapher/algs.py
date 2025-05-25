@@ -174,19 +174,15 @@ def chinesepostman(g: Graph) -> List[int]:
 
 # Общий обход графа с запоминанием вершин
 def walk(g: Graph, p0: int) -> Set[int]:
-    r_m = reachability_matrix(g)
     visited = set([p0])
-    P = [p0]
     S = [p0]
     while len(S) > 0:
         q = S.pop()
-        succs = set(np.nonzero(r_m[q, :])[0])
+        succs = set(np.nonzero(g[q, :])[0])
         for p in succs:
             if p not in visited:
                 visited.add(p)
                 S.append(p)
-                P.append(p)
-    print(P)
     return visited
 
 # Нахождение компонент связности
@@ -198,9 +194,41 @@ def conn_comps(g: Graph) -> List[Set[int]]:
             continue
         current_visited = walk(g, v)
         visited.update(current_visited)
-        comps.append(set(current_visited))
+        if len(comps) > 0 and comps[-1].intersection(current_visited) != set():
+            comps[-1].update(current_visited)
+        else:
+            comps.append(set(current_visited))
     return comps
 
+# Поиск цикла с помощью обхода в глубину
+def find_cycle(g: Graph) -> List[int] | bool:
+    visited = set()
+    
+    def dfs(p0: int):
+        S.append(p0)
+        visited.add(p0)
+        conns = set(np.nonzero(g[p0, :])[0])
+        print(p0, conns)
+        if v in conns:
+            S.append(v)
+            return True
+        for q in conns:
+            if q not in visited:
+                if dfs(q):
+                    return True
+        return False
+    
+    for v in [v.id for v in g.vertices]:
+        S = []
+        if v in visited:
+            continue
+        if dfs(v):
+            return S
+
+    return False
+
+
+# Нахождение сильных компонент
 def strong_comps(g: Graph) -> List[Set[int]]:
     R = reachability_matrix(g)
     Q = np.transpose(R)

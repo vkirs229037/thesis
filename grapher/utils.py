@@ -16,7 +16,6 @@ def gen_palette(pal_name, n):
             sats = np.arange(n)
             sats = 2 * np.abs(sats - (n-1) / 2) / (n-1)
             sats = np.clip(sats, 0, 1)
-            print(sats)
             vals = np.full(n, 1)
         case "random":
             hues = np.random.rand(n)

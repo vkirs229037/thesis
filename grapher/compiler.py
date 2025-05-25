@@ -166,7 +166,7 @@ class ParseError(Exception):
 
 class Parser:
     RESERVED_IDS = ["directed", "undirected", "vertex", "graph", "visual", "algs", "coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
-    ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity", "strongcomps"]
+    ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity", "strongcomps", "acyclic"]
     PROPS = ["palette", "edgewidth", "layout", "vertexsize"]
 
     def __init__(self, tokens: List[Token]):
@@ -513,6 +513,9 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             comps = algs.strong_comps(g)
             n_comps = len(comps)
             result += [comps, n_comps]
+        case "acyclic":
+            answer = algs.find_cycle(g)
+            result += [answer]
         case _:
             raise ValueError("Неизвестное название алгоритма")
     result.insert(0, com.func_name.value)
