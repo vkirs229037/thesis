@@ -208,7 +208,6 @@ def find_cycle(g: Graph) -> List[int] | bool:
         S.append(p0)
         visited.add(p0)
         conns = set(np.nonzero(g[p0, :])[0])
-        print(p0, conns)
         if v in conns:
             S.append(v)
             return True

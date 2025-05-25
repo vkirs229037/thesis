@@ -314,7 +314,6 @@ class MainWindow(QMainWindow):
                     cycle = ", ".join([f"{g.vs["id"][t[0]]} - {g.vs["id"][t[1]]}" for t in result[1]])
                     self.draw_figure_text(f"Цикл: {cycle}")
                     for t in result[1]:
-                        print(t)
                         cycle_e = g.get_eid(*t)
                         g.es[cycle_e]["color"] = "red"
                 case "degrees":
@@ -360,7 +359,6 @@ class MainWindow(QMainWindow):
                     else:
                         self.draw_figure_text(f"Граф имеет цикл")
                         cycle_vs = g.vs.select(result[1])
-                        print([v for v in cycle_vs])
                         for i in range(len(cycle_vs) - 1):
                             e = g.get_eid(cycle_vs[i], cycle_vs[i + 1])
                             g.es[e]["color"] = "red"
