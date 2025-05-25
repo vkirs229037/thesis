@@ -201,6 +201,25 @@ def conn_comps(g: Graph) -> List[Set[int]]:
         comps.append(set(current_visited))
     return comps
 
+def strong_comps(g: Graph) -> List[Set[int]]:
+    R = reachability_matrix(g)
+    Q = np.transpose(R)
+    RQ = R * Q
+    visited = set()
+    comps = []
+    for i in range(RQ.shape[0]):
+        if i in visited: continue
+        comp = set([i])
+        visited.add(i)
+        for j in range(RQ.shape[0]):
+            if j == i: continue
+            if j in visited: continue
+            if np.all(RQ[j, :] == RQ[i, :]):
+                comp.add(j)
+                visited.add(j)
+        comps.append(comp)
+    return comps
+
 ### 
 ### Свойства
 ###

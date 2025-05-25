@@ -21,7 +21,8 @@ ALG_NAME_TABLE = {
     "degrees": "Степени всех вершин",
     "eulerness": "Эйлеровость графа",
     "connectivity": "Связность графа",
-    "coloring": "Раскраска графа"
+    "coloring": "Раскраска графа",
+    "strongcomps": "Сильные компоненты графа"
 }
 
 class MainWindow(QMainWindow):
@@ -87,7 +88,9 @@ class MainWindow(QMainWindow):
         fleury_action.triggered.connect(lambda checked, arg="fleury": self.insert_alg(checked, arg))
         coloring_action = QAction("Раскраска графа", self)
         coloring_action.triggered.connect(lambda checked, arg="coloring": self.insert_alg(checked, arg))
-        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, coloring_action])
+        strong_comps_action = QAction("Нахождение сильных компонент", self)
+        strong_comps_action.triggered.connect(lambda checked, arg="strongcomps": self.insert_alg(checked, arg))
+        algMenu.addActions([dijkstra_action, floyd_action, fleury_action, coloring_action, strong_comps_action])
 
         propertyMenu = self.actionMenu.addMenu("Свойства графа")
 
@@ -272,11 +275,7 @@ class MainWindow(QMainWindow):
             layout_id = "circle"
         if layout_id == "kamadakawai": layout_id = "kamada_kawai"
         if layout_id == "davidsonharel": layout_id = "davidson_harel"
-        if layout_id == "kamada_kawai":
-            print(g.es["weight"])
-            layout = g.layout(layout_id, weights=g.es["weight"])
-        else:
-            layout = g.layout(layout_id)
+        layout = g.layout(layout_id)
         if (edge_width := self.visual.get("edgewidth")) is None:
             match self.graph.n:
                 case n if n < 10:
@@ -342,6 +341,14 @@ class MainWindow(QMainWindow):
                     for v in result[2]:
                         c_vs = g.vs.select(v)
                         c_vs["color"] = result[2][v]
+                case "strongcomps":
+                    self.draw_figure_text(f"Число сильных компонент - {result[2]}")
+                    palette_n = result[2]
+                    c = 0
+                    for comp in result[1]:
+                        comp_vs = g.vs.select(comp)
+                        comp_vs["color"] = c
+                        c += 1
                 case _:
                     raise ValueError
         else:
@@ -429,6 +436,10 @@ class MainWindow(QMainWindow):
                         color_str += f"{self.graph.vertices[v]} "
                     answer += color_str + "\n"
                 result.append(("text", "Раскраска графа", answer))
+            case "strongcomps":
+                result.append(("text", "Число сильных компонент", raw[1]))
+                for i, comp in enumerate(comps):
+                    comps_str_arr.append(f"Компонента {i + 1}: {", ".join(list(comp))}")
             case _:
                 raise NotImplementedError
         return result
@@ -555,17 +566,7 @@ class AlgWindow(QDialog):
                 layout.addWidget(self.start_vertices)
                 layout.addWidget(end_label)
                 layout.addWidget(self.end_vertices)
-            case "floyd":
-                pass
-            case "fleury":
-                pass
-            case "eulerness":
-                pass
-            case "degrees":
-                pass
-            case "connectivity": 
-                pass
-            case "coloring":
+            case alg if alg in ["floyd", "fleury", "eulerness", "degrees", "connectivity", "coloring", "strongcomps"]:
                 pass
             case _:
                 raise NotImplementedError(f"Окно не реализовано для алгоритма {alg_name}")
@@ -585,20 +586,8 @@ class AlgWindow(QDialog):
                 command.append(self.graph.vertices[s].name)
                 command.append(self.graph.vertices[t].name)
                 self.command = " ".join(command) + ";"
-            case "floyd":
-                self.command = "floyd;"
-            case "fleury":
-                self.command = "fleury;"
-            case "degrees":
-                self.command = "degrees;"
-            case "eulerness":
-                self.command = "eulerness;"
-            case "connectivity":
-                self.command = "connectivity;"
-            case "coloring":
-                self.command = "coloring;"
-            case _:
-                raise ValueError
+            case alg:
+                self.command = self.alg_name + ";"
         self.close()
 
 

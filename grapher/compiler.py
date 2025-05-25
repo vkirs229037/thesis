@@ -166,7 +166,7 @@ class ParseError(Exception):
 
 class Parser:
     RESERVED_IDS = ["directed", "undirected", "vertex", "graph", "visual", "algs", "coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
-    ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity"]
+    ALGS = ["coloring", "dijkstra", "eulerness", "fleury", "floyd", "degrees", "connectivity", "strongcomps"]
     PROPS = ["palette", "edgewidth", "layout", "vertexsize"]
 
     def __init__(self, tokens: List[Token]):
@@ -507,6 +507,10 @@ def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
             result += [q, d]
         case "connectivity":
             comps = algs.conn_comps(g)
+            n_comps = len(comps)
+            result += [comps, n_comps]
+        case "strongcomps":
+            comps = algs.strong_comps(g)
             n_comps = len(comps)
             result += [comps, n_comps]
         case _:
