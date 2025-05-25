@@ -95,11 +95,9 @@ class MainWindow(QMainWindow):
         degrees_action.triggered.connect(lambda checked, arg="degrees": self.insert_alg(checked, arg))
         connected_action = QAction("Связность графа", self)
         connected_action.triggered.connect(lambda checked, arg="connectivity": self.insert_alg(checked, arg))
-        planarity_action = QAction("Планарность графа", self)
-        planarity_action.triggered.connect(lambda checked, arg="planarity": self.insert_alg(checked, arg))
         euler_action = QAction("Эйлеровость графа", self)
         euler_action.triggered.connect(lambda checked, arg="eulerness": self.insert_alg(checked, arg))
-        propertyMenu.addActions([degrees_action, connected_action, planarity_action, euler_action])
+        propertyMenu.addActions([degrees_action, connected_action, euler_action])
 
         self.ie_menu = menu.addMenu("Импорт и экспорт")
 
