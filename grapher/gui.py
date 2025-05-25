@@ -116,6 +116,12 @@ class MainWindow(QMainWindow):
         to_dot.triggered.connect(lambda checked, arg="dot": self.export_to(checked, arg))
         export_menu.addActions([to_graphml, to_dot])
 
+        self.help_menu = menu.addMenu("Справка")
+
+        about_action = QAction("О программе", self)
+        about_action.triggered.connect(self.about)
+        self.help_menu.addAction(about_action)
+
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
         graph_editor = QWidget()
@@ -138,6 +144,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         self.toggle_menu(False)
+
+    def about(self):
+        aboutbox = AboutBox()
+        aboutbox.exec()
 
     def toggle_menu(self, value: bool):
         self.export_action.setEnabled(value)
@@ -649,4 +659,42 @@ class ResultWindow(QDialog):
         btn = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok, self)
         btn.accepted.connect(self.close)
         layout.addWidget(btn)
+        self.setLayout(layout)
+
+class AboutBox(QDialog):    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        self.setWindowTitle("О программе")
+        self.setBaseSize(300, 200) 
+        
+        layout = QVBoxLayout()
+        
+        title_label = QLabel("Программа для визуализации и анализа графов")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+        
+        version_label = QLabel("Версия 1.0.0")
+        
+        uni_label = QLabel("Научно-исследовательский университет \"Московский энергетический институт\", институт Информационных и вычислительных технологий, кафедра Прикладной математики и информатики")
+        uni_label.setWordWrap(True)
+        desc_label = QLabel("Выпускная квалификационная работа на тему \"Методы и средства визуализации и анализа графов\"")
+        desc_label.setWordWrap(True)
+        author_label = QLabel("Выполнил студент группы А-13-21 Кирсанов В. Р.")
+        author_label.setWordWrap(True)
+        
+        # Кнопка закрытия
+        close_button = QPushButton("ОК")
+        close_button.clicked.connect(self.close)
+        
+        # Добавление элементов в лейаут
+        layout.addWidget(title_label)
+        layout.addWidget(version_label)
+        layout.addStretch(1)
+        layout.addWidget(uni_label)
+        layout.addWidget(desc_label)
+        layout.addWidget(author_label)
+        layout.addStretch(1)
+        layout.addWidget(close_button)
+        
         self.setLayout(layout)
