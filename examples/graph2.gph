@@ -1,0 +1,8 @@
+vertex {
+1; 2; 3; 4;
+}
+
+graph {
+directed;
+1 > [2 3 4] #1;
+}

@@ -1,0 +1,32 @@
+vertex {
+v1: "Конец";
+v2;
+v3;
+v4;
+v5;
+v6: "Начало";
+}
+
+graph {
+directed;
+v1 > v2 #5;
+v1 > v3 #7;
+v2 > v1 #19;
+v2 > v3 #1;
+v3 > v2 #5;
+v5 > [v3 v4] #1;
+v6 > v4 #6;
+v6 > v5 #1;
+v3 > v4 #5;
+v4 > v3 #5;
+v1 > v5 #7;
+}
+
+visual {
+layout circle;
+}
+
+algs {
+degrees;
+dijkstra v6 v1;
+}
