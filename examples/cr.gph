@@ -12,13 +12,8 @@ undirected;
 8 > 1 #3;
 }
 
-visual {
-vertexsize #30;
-layout grid;
-edgewidth #2;
-palette grey;
-}
-
 algs {
 connectivity;
+coloring;
+dijkstra 2 8;
 }
