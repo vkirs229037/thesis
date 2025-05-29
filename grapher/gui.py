@@ -3,9 +3,9 @@ from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as Navigation
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import igraph as ig
-from PyQt6.QtCore import QSize, QAbstractTableModel, Qt
+from PyQt6.QtCore import QSize, QAbstractTableModel, Qt, QRect
 from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView, QHeaderView
-from PyQt6.QtGui import QAction, QKeySequence, QTextCursor
+from PyQt6.QtGui import QAction, QKeySequence, QTextCursor, QPainter, QColor
 from compiler import compile, ParseError, LexError, exec_alg, from_ig_graph
 from graph import Graph
 import os
@@ -26,6 +26,85 @@ ALG_NAME_TABLE = {
     "acyclic": "Ацикличность графа"
 }
 
+class LineNumberArea(QWidget):
+    def __init__(self, parent=None):
+        super(LineNumberArea, self).__init__(parent)
+        
+    def sizeHint(self):
+        return QSize(self.parent().linenum_width(), 0)
+    
+    def paintEvent(self, e):
+        self.parent().linenum_paintevent(e)
+
+
+class TextEditor(QPlainTextEdit):
+    def __init__(self, parent=None):
+        super(TextEditor, self).__init__(parent)
+
+        self.line_num = LineNumberArea(self)
+
+        font = self.font()
+        font.setFamily("Consolas")
+        font.setPointSize(11)
+        self.setFont(font)
+
+        self.blockCountChanged.connect(self.update_linenum_width)
+        self.updateRequest.connect(self.update_linenum)
+
+        self.update_linenum_width()
+
+    def linenum_width(self):
+        line_count = max(1, self.blockCount())
+        count_len = len(str(line_count))
+        width = 10 + self.fontMetrics().horizontalAdvance("0") * count_len
+        return width
+    
+    def update_linenum_width(self):
+        self.setViewportMargins(self.linenum_width(), 0, 0, 0)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+
+        rect = self.contentsRect()
+        width = self.linenum_width()
+        self.line_num.setGeometry(QRect(rect.left(), rect.top(), width, rect.height()))
+
+    def update_linenum(self, rect, dy):
+        if dy:
+            self.line_num.scroll(0, dy)
+        else:
+            self.line_num.update(0, rect.y(), self.line_num.width(), rect.height())
+
+        if rect.contains(self.viewport().rect()):
+            self.update_linenum_width()
+
+    def linenum_paintevent(self, e):
+        painter = QPainter(self.line_num)
+        painter.fillRect(e.rect(), Qt.GlobalColor.color1)
+
+        painter.setFont(self.font())
+        painter.setPen(Qt.GlobalColor.white)
+
+        block = self.firstVisibleBlock()
+        block_num = block.blockNumber()
+        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
+        bottom = top + self.blockBoundingRect(block).height()
+
+        while block.isValid() and top <= e.rect().bottom():
+            if block.isVisible() and bottom >= e.rect().top():
+                number = str(block_num + 1)
+                painter.drawText(0, int(top), 
+                                self.line_num.width() - 5,
+                                self.fontMetrics().height(),
+                                Qt.AlignmentFlag.AlignRight, 
+                                number)
+            
+            block = block.next()
+            top = bottom
+            bottom = top + self.blockBoundingRect(block).height()
+            block_num += 1
+
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -40,7 +119,7 @@ class MainWindow(QMainWindow):
         self.canvases = [FigureCanvas(self.figures[0])]
         self.toolbars = [NavigationToolbar(self.canvases[0], self)]
         self.button = QPushButton("Построить")
-        self.editor = QPlainTextEdit()
+        self.editor = TextEditor()
         self.dirty = False
         self.fileName: str | None = None
         self.editor.textChanged.connect(self.change_dirty)
