@@ -278,7 +278,10 @@ class MainWindow(QMainWindow):
             layout_id = "circle"
         if layout_id == "kamadakawai": layout_id = "kamada_kawai"
         if layout_id == "davidsonharel": layout_id = "davidson_harel"
-        layout = g.layout(layout_id)
+        if layout_id == "kamada_kawai":
+            layout = g.layout(layout_id, weights=g.es["weight"])
+        else:
+            layout = g.layout(layout_id)
         if (edge_width := self.visual.get("edgewidth")) is None:
             match self.graph.n:
                 case n if n < 10:
