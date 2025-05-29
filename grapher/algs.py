@@ -200,13 +200,19 @@ def find_cycle(g: Graph) -> List[int] | bool:
     visited = set()
     
     def dfs(p0: int):
+        nonlocal S
+        if len(S) > 0:
+            pred = S[-1]
+        else:
+            pred = None
         S.append(p0)
         visited.add(p0)
-        conns = set(np.nonzero(g[p0, :])[0])
-        if v in conns:
-            S.append(v)
-            return True
-        for q in conns:
+        succs = set(np.nonzero(g[p0, :])[0])
+        for q in succs:
+            if q in visited and q != pred:
+                S = S[S.index(q):]
+                S.append(q)
+                return True
             if q not in visited:
                 if dfs(q):
                     return True
