@@ -167,11 +167,6 @@ def fleury_undirected(g: Graph) -> List[Tuple[int, int]]:
         marked.add((new_e[1], new_e[0]))
     return result
 
-
-# Задача китайского почтальона
-def chinesepostman(g: Graph) -> List[int]:
-    raise NotImplementedError
-
 # Общий обход графа с запоминанием вершин
 def walk(g: Graph, p0: int) -> Set[int]:
     visited = set([p0])
