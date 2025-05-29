@@ -4,7 +4,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 import igraph as ig
 from PyQt6.QtCore import QSize, QAbstractTableModel, Qt, QRect
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView, QHeaderView
+from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QDialogButtonBox, QPlainTextEdit, QMessageBox, QFileDialog, QComboBox, QLabel, QTabWidget, QTableView, QHeaderView, QStatusBar
 from PyQt6.QtGui import QAction, QKeySequence, QTextCursor, QPainter, QColor
 from compiler import compile, ParseError, LexError, exec_alg, from_ig_graph
 from graph import Graph
@@ -25,6 +25,7 @@ ALG_NAME_TABLE = {
     "strongcomps": "Сильные компоненты графа",
     "acyclic": "Ацикличность графа"
 }
+
 
 class LineNumberArea(QWidget):
     def __init__(self, parent=None):
@@ -50,6 +51,7 @@ class TextEditor(QPlainTextEdit):
 
         self.blockCountChanged.connect(self.update_linenum_width)
         self.updateRequest.connect(self.update_linenum)
+        self.cursorPositionChanged.connect(self.update_status)
 
         self.update_linenum_width()
 
@@ -104,6 +106,13 @@ class TextEditor(QPlainTextEdit):
             bottom = top + self.blockBoundingRect(block).height()
             block_num += 1
 
+    def update_status(self):
+        cursor = self.textCursor()
+        line = cursor.blockNumber() + 1
+        col = cursor.columnNumber() + 1
+
+        self.parent().editor_status_bar.showMessage(f"Строка: {line}, Столбец: {col}")
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -119,7 +128,7 @@ class MainWindow(QMainWindow):
         self.canvases = [FigureCanvas(self.figures[0])]
         self.toolbars = [NavigationToolbar(self.canvases[0], self)]
         self.button = QPushButton("Построить")
-        self.editor = TextEditor()
+        self.editor = TextEditor(self)
         self.dirty = False
         self.fileName: str | None = None
         self.editor.textChanged.connect(self.change_dirty)
@@ -208,14 +217,17 @@ class MainWindow(QMainWindow):
         workspace = QWidget()
         workspace_layout = QHBoxLayout()
         graph_editor = QWidget()
+        graph_editor.editor_status_bar = QStatusBar(graph_editor)
         graph_editor_layout = QVBoxLayout()
         graph_editor_layout.addWidget(self.editor)
         graph_editor_layout.addWidget(self.button)
+        graph_editor_layout.addWidget(graph_editor.editor_status_bar)
         graph_editor.setLayout(graph_editor_layout)
 
         self.graph_images = QTabWidget()
         self.graph_images.currentChanged.connect(self.on_tab_change)
-        
+
+
         workspace_layout.addWidget(graph_editor)
         workspace_layout.addWidget(self.graph_images)
         workspace.setLayout(workspace_layout)

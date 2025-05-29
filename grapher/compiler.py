@@ -64,7 +64,7 @@ class Lexer:
         result: List[str] = []
         while (c := self.peek()) != "\"": 
             if c is None:
-                raise LexError(f"{self.line}:{self.col} Ошибка: ожидалась \", встречен конец файла")
+                raise LexError(f"{self.line + 1}:{self.col + 1} Ошибка: ожидалась \", встречен конец файла")
             # здесь self.consume() не будет None
             result.append(self.consume()) # type: ignore
         return "".join(result)
@@ -97,7 +97,7 @@ class Lexer:
                 self.col += 1
                 token = Token(TType.String, self.take_string(), self.line, self.col)
             case _:
-                raise LexError(f"{self.line}:{self.col} Ошибка: неизвестный символ {c}")
+                raise LexError(f"{self.line + 1}:{self.col + 1} Ошибка: неизвестный символ {c}")
         self.cur += 1
         return token
     
@@ -117,7 +117,7 @@ class Lexer:
         try:
             _ = int(str_value)
         except ValueError:
-            raise LexError(f"{self.line}:{self.col} Ошибка: неверно записанное десятичное число")
+            raise LexError(f"{self.line + 1}:{self.col + 1} Ошибка: неверно записанное десятичное число")
         return Token(TType.Numlit, "".join(result), self.line, self.col)
 
     def is_numeric(self, c: str):
@@ -185,7 +185,7 @@ class Parser:
         if token is None:
             raise ParseError(f"{msg}")
         else:
-            raise ParseError(f"{token.line}:{token.col} {msg}")
+            raise ParseError(f"{token.line + 1}:{token.col + 1} {msg}")
 
     def last_id(self) -> int:
         self.LAST_ID += 1
@@ -457,7 +457,7 @@ def report_alg_err(token: Token | None, msg: str) -> NoReturn:
     if token is None:
         raise ValueError(f"{msg}")
     else:
-        raise ValueError(f"{token.line}:{token.col} {msg}")
+        raise ValueError(f"{token.line + 1}:{token.col + 1} {msg}")
 
 def exec_alg(g: Graph, com: Command) -> Tuple[Any]:
     args = com.args
