@@ -14,12 +14,9 @@ def connections(g: Graph, v: int) -> set[int]:
     prev_s = set()
     while not (prev_s == s):
         prev_s = s
-        temp_s = set()
-        for xi in s:
-            for i in range(n):
-                if g[xi, i] != 0:
-                    temp_s.add(i)
-        s = s.union(temp_s)
+        for xi in prev_s:
+            conns = set(np.nonzero(g[xi, :])[0])
+            s = s.union(conns)
     return s
 
 def reachability_matrix(g: Graph) -> np.ndarray[int]:
