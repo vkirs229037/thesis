@@ -511,7 +511,7 @@ class MainWindow(QMainWindow):
                     answer = "Граф не эйлеров"
                 result.append(("text", "Эйлеровость графа", answer))
             case "floyd":
-                v_names = [str(v) for v in self.graph.vertices]
+                v_names = np.array([str(v) for v in self.graph.vertices])
                 result.append(("table", "Таблица расстояний", raw[0]))
                 result.append(("table", "Таблица путей", v_names[raw[1]]))
             case "fleury":
@@ -779,7 +779,7 @@ class AboutBox(QDialog):
         
         uni_label = QLabel("Научно-исследовательский университет \"Московский энергетический институт\", институт Информационных и вычислительных технологий, кафедра Прикладной математики и информатики")
         uni_label.setWordWrap(True)
-        desc_label = QLabel("Выпускная квалификационная работа на тему \"Методы и средства визуализации и анализа графов\"")
+        desc_label = QLabel("Выпускная квалификационная работа на тему \"Методы и программные средства визуализации и анализа графов\"")
         desc_label.setWordWrap(True)
         author_label = QLabel("Выполнил студент группы А-13-21 Кирсанов В. Р.")
         author_label.setWordWrap(True)
