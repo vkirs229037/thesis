@@ -194,6 +194,7 @@ def conn_comps(g: Graph) -> List[Set[int]]:
 
 # Поиск цикла с помощью обхода в глубину
 def find_cycle(g: Graph) -> List[int] | bool:
+    mark = {v.id: 0 for v in g.vertices}
     visited = set()
     
     def dfs(p0: int):
@@ -203,21 +204,25 @@ def find_cycle(g: Graph) -> List[int] | bool:
         else:
             pred = None
         S.append(p0)
-        visited.add(p0)
+        mark[p0] = 1
         succs = set(np.nonzero(g[p0, :])[0])
         for q in succs:
-            if q in visited and q != pred:
+            if g.kind == GraphKind.Undirected and q == pred:
+                continue
+            if mark[q] == 1:
                 S = S[S.index(q):]
                 S.append(q)
                 return True
-            if q not in visited:
+            if mark[q] == 0:
                 if dfs(q):
                     return True
+        mark[p0] = 2
+        S.pop()
         return False
     
     for v in [v.id for v in g.vertices]:
         S = []
-        if v in visited:
+        if mark[v] != 0:
             continue
         if dfs(v):
             return S
